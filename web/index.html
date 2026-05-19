@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Football Manager Pro</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+
+    <aside class="sidebar">
+        <div class="logo">
+            <span class="ball">⚽</span>
+            <div>
+                <h2>Football Manager</h2>
+                <p>Transfermarkt Style</p>
+            </div>
+        </div>
+
+        <nav class="menu">
+            <button onclick="showPage('dashboard')">🏠 Dashboard</button>
+            <button onclick="showPage('clubs')">🏟️ Clubs</button>
+            <button onclick="showPage('equipes')">👥 Équipes</button>
+            <button onclick="showPage('joueurs')">⚽ Joueurs</button>
+            <button onclick="showPage('titulaires')">⭐ Titulaires</button>
+        </nav>
+    </aside>
+
+    <main class="content">
+        <header class="header">
+            <h1 id="page-title">Dashboard</h1>
+            <p id="page-subtitle">Gestion moderne de clubs de football</p>
+        </header>
+
+        <section id="page-content" class="cards">
+            <!-- Contenu généré par JavaScript -->
+        </section>
+    </main>
+
+</div>
+<!-- =========================================================
+     MODAL CRÉATION D'ÉQUIPE
+========================================================= -->
+<div id="modal-equipe" class="modal hidden">
+    <div class="modal-overlay" onclick="fermerModalEquipe()"></div>
+
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>👥 Créer une équipe</h2>
+            <button class="modal-close" onclick="fermerModalEquipe()">✕</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="equipe-club">Club</label>
+                <select id="equipe-club"></select>
+            </div>
+
+            <div class="form-group">
+                <label for="equipe-niveau">Niveau</label>
+                <select id="equipe-niveau">
+                    <option value="LIGUE_1">Ligue 1</option>
+                    <option value="LIGUE_2">Ligue 2</option>
+                    <option value="NATIONAL">National</option>
+                    <option value="REGIONAL_1">Régional 1</option>
+                    <option value="REGIONAL_2">Régional 2</option>
+                    <option value="REGIONAL_3">Régional 3</option>
+                    <option value="DEPARTEMENTAL_1">Départemental 1</option>
+                    <option value="DEPARTEMENTAL_2">Départemental 2</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="entraineur-nom">Nom de l'entraîneur</label>
+                <input type="text" id="entraineur-nom" placeholder="Ex. Le Buhé">
+            </div>
+
+            <div class="form-group">
+                <label for="entraineur-prenom">Prénom de l'entraîneur</label>
+                <input type="text" id="entraineur-prenom" placeholder="Ex. Tanguy">
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="action-btn secondary-btn"
+                    onclick="fermerModalEquipe()">
+                Annuler
+            </button>
+
+            <button class="action-btn"
+                    onclick="soumettreCreationEquipe()">
+                ➕ Créer l'équipe
+            </button>
+        </div>
+    </div>
+</div>
+<!-- =========================================================
+     MODAL AJOUT D'UN JOUEUR
+========================================================= -->
+<div id="modal-joueur" class="modal hidden">
+    <div class="modal-overlay" onclick="fermerModalJoueur()"></div>
+
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>⚽ Ajouter un joueur</h2>
+            <button class="modal-close" onclick="fermerModalJoueur()">✕</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="joueur-club">Club</label>
+                <select id="joueur-club"
+                        onchange="chargerEquipesPourJoueur()">
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="joueur-equipe">Équipe</label>
+                <select id="joueur-equipe"></select>
+            </div>
+
+            <div class="form-group">
+                <label for="joueur-nom">Nom</label>
+                <input type="text" id="joueur-nom">
+            </div>
+
+            <div class="form-group">
+                <label for="joueur-prenom">Prénom</label>
+                <input type="text" id="joueur-prenom">
+            </div>
+
+            <div class="form-group">
+                <label for="joueur-date-naissance">Date de naissance</label>
+                <input type="date" id="joueur-date-naissance">
+            </div>
+
+            <div class="form-group">
+                <label for="joueur-poste">Poste</label>
+                <select id="joueur-poste">
+                    <option value="GARDIEN">Gardien</option>
+                    <option value="DEFENSEUR">Défenseur</option>
+                    <option value="MILIEU">Milieu</option>
+                    <option value="ATTAQUANT">Attaquant</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="joueur-prix">Prix (€)</label>
+                <input type="number" id="joueur-prix" value="100000">
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="joueur-titulaire">
+                    Joueur titulaire
+                </label>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="action-btn secondary-btn"
+                    onclick="fermerModalJoueur()">
+                Annuler
+            </button>
+
+            <button class="action-btn"
+                    onclick="soumettreAjoutJoueur()">
+                ➕ Ajouter le joueur
+            </button>
+        </div>
+    </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

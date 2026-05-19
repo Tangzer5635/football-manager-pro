@@ -1,0 +1,42 @@
+{
+  "clubs": [
+    {
+      "nom": "Football Club de Lorient",
+      "dateCreation": "1926-04-02",
+      "equipes": [
+        {
+          "niveau": "L1",
+          "entraineur": "Le Buhé Tanguy",
+          "joueurs": [
+            {
+              "nom": "Bensard",
+              "prenom": "Romain",
+              "poste": "ATTAQUANT",
+              "prix": 100000.0,
+              "titulaire": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nom": "Football Club de Nantes",
+      "dateCreation": "2026-05-19",
+      "equipes": [
+        {
+          "niveau": "L2",
+          "entraineur": "Lorient Triste",
+          "joueurs": [
+            {
+              "nom": "Le Buhé",
+              "prenom": "Tanguy",
+              "poste": "GARDIEN",
+              "prix": 100000.0,
+              "titulaire": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
