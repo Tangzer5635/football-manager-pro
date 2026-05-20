@@ -269,27 +269,56 @@ function afficherJoueurs(title, subtitle, content) {
     data.clubs.forEach(club => {
         club.equipes.forEach(equipe => {
             equipe.joueurs.forEach(joueur => {
-                const presentation =
-                    `Je suis ${joueur.nom} ${joueur.prenom} ` +
-                    `j'ai ${joueur.age ?? "?"} ans, ` +
-                    `je joue ${joueur.poste}, ` +
-                    `je coûte ${formatPrix(joueur.prix)} ` +
-                    `et suis-je titulaire ? ${joueur.titulaire}`;
+
+                // Si l'âge n'est pas présent dans le JSON,
+                // on le calcule à partir de dateNaissance
+                let age = joueur.age;
+
+                if (
+                    (age === undefined || age === null || age === "") &&
+                    joueur.dateNaissance
+                ) {
+                    const naissance = new Date(joueur.dateNaissance);
+                    const aujourdHui = new Date();
+
+                    age =
+                        aujourdHui.getFullYear() -
+                        naissance.getFullYear();
+
+                    const mois =
+                        aujourdHui.getMonth() -
+                        naissance.getMonth();
+
+                    if (
+                        mois < 0 ||
+                        (mois === 0 &&
+                            aujourdHui.getDate() <
+                            naissance.getDate())
+                    ) {
+                        age--;
+                    }
+                }
+
+                // Objet complet envoyé à la modale
+                const joueurData = {
+                    nom: joueur.nom,
+                    prenom: joueur.prenom,
+                    age: joueur.age ?? calculerAge(joueur.dateNaissance),
+                    poste: joueur.poste,
+                    prix: formatPrix(joueur.prix),
+                    titulaire: joueur.titulaire,
+                    club: club.nom,
+                    niveau: equipe.niveau,
+                    dateNaissance: joueur.dateNaissance
+                };
 
                 cards += `
                     <div class="card">
                         <h3>⚽ ${joueur.prenom} ${joueur.nom}</h3>
-                        <p><strong>Poste :</strong> ${joueur.poste}</p>
-                        <p><strong>Valeur :</strong> ${formatPrix(joueur.prix)}</p>
-                        <p><strong>Titulaire :</strong>
-                            ${joueur.titulaire ? "⭐ Oui" : "Non"}
-                        </p>
-                        <p><strong>Club :</strong> ${club.nom}</p>
-                        <p><strong>Niveau :</strong> ${equipe.niveau}</p>
 
-                        <div style="margin-top: 15px;">
+                        <div style="margin-top: 20px;">
                             <button class="action-btn"
-                                    onclick='afficherPresentationJoueur(${JSON.stringify(presentation)})'>
+                                onclick='afficherPresentationJoueur(${JSON.stringify(joueurData)})'>
                                 👁️ Présentation
                             </button>
 
@@ -310,27 +339,54 @@ function afficherJoueurs(title, subtitle, content) {
     });
 
     content.innerHTML = `
-    <div class="page-actions">
-        <button class="action-btn" onclick="ajouterJoueur()">
-            ➕ Ajouter un joueur
-        </button>
-    </div>
+        <div class="page-actions">
+            <button class="action-btn" onclick="ajouterJoueur()">
+                ➕ Ajouter un joueur
+            </button>
+        </div>
 
-    ${
+        ${
         cards === ""
             ? `
-                <div class="card">
-                    <h3>Aucun joueur</h3>
-                    <p>Aucun joueur trouvé.</p>
-                </div>
-            `
+                    <div class="card">
+                        <h3>Aucun joueur</h3>
+                        <p>Aucun joueur trouvé.</p>
+                    </div>
+                `
             : `
-                <div class="cards grid">
-                    ${cards}
-                </div>
-            `
+                    <div class="cards grid">
+                        ${cards}
+                    </div>
+                `
     }
-`;
+    `;
+}
+
+function formatPrix(prix) {
+    prix = Number(prix);
+
+    if (prix >= 1_000_000_000) {
+        const milliards = prix / 1_000_000_000;
+        return Number.isInteger(milliards)
+            ? `${milliards} Md€`
+            : `${milliards.toFixed(1)} Md€`;
+    }
+
+    if (prix >= 1_000_000) {
+        const millions = prix / 1_000_000;
+        return Number.isInteger(millions)
+            ? `${millions}M€`
+            : `${millions.toFixed(1)}M€`;
+    }
+
+    if (prix >= 1_000) {
+        const milliers = prix / 1_000;
+        return Number.isInteger(milliers)
+            ? `${milliers}k€`
+            : `${milliers.toFixed(1)}k€`;
+    }
+
+    return `${prix}€`;
 }
 
 // ===================================================================
@@ -338,44 +394,117 @@ function afficherJoueurs(title, subtitle, content) {
 // ===================================================================
 function afficherTitulaires(title, subtitle, content) {
     title.textContent = "Titulaires";
-    subtitle.textContent = "Liste des joueurs titulaires";
+    subtitle.textContent = "Recherche des joueurs titulaires par équipe";
 
-    let cards = "";
+    // Liste de toutes les équipes
+    let options = '<option value="">Toutes les équipes</option>';
 
     data.clubs.forEach(club => {
         club.equipes.forEach(equipe => {
-            equipe.joueurs.forEach(joueur => {
-                if (!joueur.titulaire) return;
+            const valeur = `${club.nom}|${equipe.niveau}`;
+            const label = `${club.nom} - ${equipe.niveau}`;
 
-                cards += `
-                    <div class="card">
-                        <h3>⭐ ${joueur.prenom} ${joueur.nom}</h3>
-                        <p><strong>Poste :</strong> ${joueur.poste}</p>
-                        <p><strong>Valeur :</strong> ${formatPrix(joueur.prix)}</p>
-                        <p><strong>Club :</strong> ${club.nom}</p>
-                        <p><strong>Niveau :</strong> ${equipe.niveau}</p>
-                    </div>
-                `;
-            });
+            options += `
+                <option value="${escapeJs(valeur)}">
+                    ${label}
+                </option>
+            `;
         });
     });
 
     content.innerHTML = `
-    ${
-        cards === ""
-            ? `
-                <div class="card">
-                    <h3>Aucun titulaire</h3>
-                    <p>Aucun joueur titulaire trouvé.</p>
-                </div>
-            `
-            : `
-                <div class="cards grid">
-                    ${cards}
-                </div>
-            `
+        <div class="card">
+            <div class="form-group">
+                <label for="filtre-equipe">
+                    Rechercher les titulaires par équipe
+                </label>
+
+                <select id="filtre-equipe"
+                        onchange="filtrerTitulairesParEquipe()">
+                    ${options}
+                </select>
+            </div>
+        </div>
+
+        <div id="titulaires-resultats" class="cards grid"></div>
+    `;
+
+    // Affiche tous les titulaires au chargement
+    filtrerTitulairesParEquipe();
+}
+
+// ===================================================================
+// AJOUTE CETTE FONCTION dans app.js
+// ===================================================================
+function filtrerTitulairesParEquipe() {
+    const select = document.getElementById("filtre-equipe");
+    const container = document.getElementById("titulaires-resultats");
+
+    if (!select || !container) {
+        return;
     }
-`;
+
+    const filtre = select.value;
+    let cards = "";
+
+    data.clubs.forEach(club => {
+        club.equipes.forEach(equipe => {
+
+            // Filtre sur l'équipe sélectionnée
+            if (filtre) {
+                const valeur = `${club.nom}|${equipe.niveau}`;
+
+                if (valeur !== filtre) {
+                    return;
+                }
+            }
+
+            // Récupère uniquement les titulaires
+            const titulaires = equipe.joueurs.filter(
+                joueur => joueur.titulaire === true
+            );
+
+            if (titulaires.length === 0) {
+                return;
+            }
+
+            const liste = titulaires.map(joueur => {
+                const age =
+                    joueur.age ??
+                    (joueur.dateNaissance
+                        ? calculerAge(joueur.dateNaissance)
+                        : "?");
+
+                return `
+                    <p>
+                        ⚽ <strong>${joueur.prenom} ${joueur.nom}</strong><br>
+                        ${joueur.poste} • ${age} ans • ${formatPrix(joueur.prix)}
+                    </p>
+                `;
+            }).join("");
+
+            cards += `
+                <div class="card">
+                    <h3>🏟️ ${club.nom}</h3>
+                    <p><strong>Niveau :</strong> ${equipe.niveau}</p>
+                    <div style="margin-top: 12px;">
+                        ${liste}
+                    </div>
+                </div>
+            `;
+        });
+    });
+
+    if (cards === "") {
+        container.innerHTML = `
+            <div class="card">
+                <h3>Aucun titulaire</h3>
+                <p>Aucun joueur titulaire trouvé pour cette équipe.</p>
+            </div>
+        `;
+    } else {
+        container.innerHTML = cards;
+    }
 }
 
 // ===================================================================
@@ -400,11 +529,28 @@ async function creerClub() {
 }
 
 async function supprimerClub(nom) {
-    if (!confirm(`Supprimer le club "${nom}" ?`)) return;
+    if (!confirm(`Supprimer le club "${nom}" ?`)) {
+        return;
+    }
 
-    await deleteForm("http://localhost:8080/clubs", {nom});
+    try {
+        const response = await fetch("http://localhost:8080/clubs", {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: toForm({ nom })
+        });
 
-    await rafraichir("clubs");
+        if (!response.ok) {
+            throw new Error("Erreur lors de la suppression du club.");
+        }
+
+        await rafraichir("clubs");
+    } catch (error) {
+        console.error(error);
+        alert(error.message);
+    }
 }
 
 // ===================================================================
@@ -466,6 +612,21 @@ async function ajouterJoueur() {
         return;
     }
 
+    const prixInput = document.getElementById("joueur-prix");
+
+    let preview = document.getElementById("prix-preview");
+
+    if (!preview) {
+        preview = document.createElement("div");
+        preview.id = "prix-preview";
+        preview.className = "prix-preview";
+
+        prixInput.insertAdjacentElement("afterend", preview);
+    }
+
+    prixInput.addEventListener("input", mettreAJourApercuPrix);
+    mettreAJourApercuPrix();
+
     const selectClub = document.getElementById("joueur-club");
     selectClub.innerHTML = "";
 
@@ -491,14 +652,15 @@ async function ajouterJoueur() {
     document.getElementById("modal-joueur").classList.remove("hidden");
 }
 
-async function supprimerJoueur(clubNom, niveau, nom, prenom) {
+async function supprimerJoueur(clubNom, niveau, nom, prenom, age) {
     if (!confirm(`Supprimer ${prenom} ${nom} ?`)) return;
 
     await deleteForm("http://localhost:8080/joueurs", {
         clubNom,
         niveau,
         nom,
-        prenom
+        prenom,
+        age
     });
 
     await rafraichir("joueurs");
@@ -558,11 +720,41 @@ async function rafraichir(page) {
 // ===================================================================
 // UTILITAIRES
 // ===================================================================
-// ===================================================================
-// Remplace ENTIEREMENT la fonction afficherPresentationJoueur()
-// dans app.js par cette version HTML (sans alert)
-// ===================================================================
-function afficherPresentationJoueur(presentation) {
+function afficherPresentationJoueur(joueur) {
+    // Si l'âge n'existe pas dans le JSON, on le calcule ici
+    let age = joueur.age;
+
+    if (
+        age === undefined ||
+        age === null ||
+        age === "" ||
+        age === "undefined"
+    ) {
+        if (joueur.dateNaissance) {
+            const naissance = new Date(joueur.dateNaissance);
+            const aujourdHui = new Date();
+
+            age =
+                aujourdHui.getFullYear() -
+                naissance.getFullYear();
+
+            const mois =
+                aujourdHui.getMonth() -
+                naissance.getMonth();
+
+            if (
+                mois < 0 ||
+                (mois === 0 &&
+                    aujourdHui.getDate() <
+                    naissance.getDate())
+            ) {
+                age--;
+            }
+        } else {
+            age = "?";
+        }
+    }
+
     const modal = document.createElement("div");
     modal.className = "modal";
 
@@ -576,15 +768,23 @@ function afficherPresentationJoueur(presentation) {
             </div>
 
             <div class="modal-body">
-                <div class="card" style="margin: 0; box-shadow: none;">
-                    <p style="
-                        font-size: 16px;
-                        line-height: 1.8;
-                        color: #e2e8f0;
-                        white-space: pre-line;
-                    ">
-                        ${presentation}
-                    </p>
+                <div class="player-profile">
+                    <div class="player-details">
+                        <h3 class="player-name">
+                            ${joueur.prenom} ${joueur.nom}
+                        </h3>
+
+                        <div class="player-info">
+                            <p><strong>Âge :</strong> ${age} ans</p>
+                            <p><strong>Poste :</strong> ${joueur.poste}</p>
+                            <p><strong>Valeur :</strong> ${joueur.prix}</p>
+                            <p><strong>Titulaire :</strong>
+                                ${joueur.titulaire ? "⭐ Oui" : "Non"}
+                            </p>
+                            <p><strong>Club :</strong> ${joueur.club}</p>
+                            <p><strong>Niveau :</strong> ${joueur.niveau}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -596,23 +796,18 @@ function afficherPresentationJoueur(presentation) {
         </div>
     `;
 
-    // Fermeture du modal
+    // Fermeture
     const closeButtons = modal.querySelectorAll(
         ".modal-close, .secondary-btn, .modal-overlay"
     );
 
-    closeButtons.forEach(btn => {
-        btn.addEventListener("click", () => {
+    closeButtons.forEach(button => {
+        button.addEventListener("click", () => {
             modal.remove();
         });
     });
 
-    // Ajout au DOM
     document.body.appendChild(modal);
-}
-
-function formatPrix(prix) {
-    return Number(prix || 0).toLocaleString("fr-FR") + " €";
 }
 
 function formatDate(date) {
@@ -781,6 +976,24 @@ async function soumettreAjoutJoueur() {
         return;
     }
 
+    // ======================================================
+    // CALCUL AUTOMATIQUE DE L'ÂGE
+    // ======================================================
+    const naissance = new Date(dateNaissance);
+    const aujourdHui = new Date();
+
+    let age = aujourdHui.getFullYear() - naissance.getFullYear();
+
+    const mois = aujourdHui.getMonth() - naissance.getMonth();
+
+    if (
+        mois < 0 ||
+        (mois === 0 &&
+            aujourdHui.getDate() < naissance.getDate())
+    ) {
+        age--;
+    }
+
     try {
         await postForm("http://localhost:8080/joueurs", {
             clubNom,
@@ -788,6 +1001,7 @@ async function soumettreAjoutJoueur() {
             nom,
             prenom,
             dateNaissance,
+            age,          // <-- âge envoyé au backend
             poste,
             prix,
             titulaire
@@ -799,4 +1013,79 @@ async function soumettreAjoutJoueur() {
         console.error(error);
         alert(error.message);
     }
+}
+
+function calculerAge(dateNaissance) {
+    if (!dateNaissance) {
+        return "?";
+    }
+
+    const naissance = new Date(dateNaissance);
+
+    if (isNaN(naissance)) {
+        return "?";
+    }
+
+    const aujourdHui = new Date();
+
+    let age =
+        aujourdHui.getFullYear() -
+        naissance.getFullYear();
+
+    const mois =
+        aujourdHui.getMonth() -
+        naissance.getMonth();
+
+    if (
+        mois < 0 ||
+        (mois === 0 &&
+            aujourdHui.getDate() < naissance.getDate())
+    ) {
+        age--;
+    }
+
+    return age;
+}
+
+function formatPrixInput(valeur) {
+    const prix = Number(valeur);
+
+    if (!prix || prix <= 0) {
+        return "";
+    }
+
+    if (prix >= 1_000_000_000) {
+        const md = prix / 1_000_000_000;
+        return Number.isInteger(md)
+            ? `${md} Md€`
+            : `${md.toFixed(1)} Md€`;
+    }
+
+    if (prix >= 1_000_000) {
+        const m = prix / 1_000_000;
+        return Number.isInteger(m)
+            ? `${m}M€`
+            : `${m.toFixed(1)}M€`;
+    }
+
+    if (prix >= 1_000) {
+        const k = prix / 1_000;
+        return Number.isInteger(k)
+            ? `${k}k€`
+            : `${k.toFixed(1)}k€`;
+    }
+
+    return `${prix}€`;
+}
+
+// Met à jour l'affichage sous le champ Prix
+function mettreAJourApercuPrix() {
+    const input = document.getElementById("joueur-prix");
+    const preview = document.getElementById("prix-preview");
+
+    if (!input || !preview) {
+        return;
+    }
+
+    preview.textContent = formatPrixInput(input.value);
 }

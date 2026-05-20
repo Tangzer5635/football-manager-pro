@@ -10,5 +10,6 @@
     <orderEntry type="library" name="javafx-sdk-21.0" level="project" />
     <orderEntry type="library" name="flatlaf-3.7.1" level="project" />
     <orderEntry type="library" name="gson-2.11.0" level="project" />
+    <orderEntry type="library" name="mssql-jdbc-13.4.0.jre11" level="project" />
   </component>
 </module>

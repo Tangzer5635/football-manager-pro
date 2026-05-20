@@ -80,7 +80,6 @@ public class ApiServer {
                     );
 
                     model.ajouterClub(club);
-                    JsonExporter.exporter(model.recupererClubs());
 
                     send(exchange, 200,
                             "{\"success\":true,\"message\":\"Club créé\"}");
@@ -90,38 +89,16 @@ public class ApiServer {
                 if ("DELETE".equals(exchange.getRequestMethod())) {
                     String body = readBody(exchange);
 
-                    String clubNom = getParam(body, "clubNom");
-                    String niveauStr = getParam(body, "niveau");
+                    // Le front envoie simplement : nom=NomDuClub
                     String nom = getParam(body, "nom");
-                    String prenom = getParam(body, "prenom");
 
                     Optional<Club> clubOpt = model.recupererClubs()
                             .stream()
-                            .filter(c -> c.getNom().equals(clubNom))
+                            .filter(c -> c.getNom().equals(nom))
                             .findFirst();
 
                     if (clubOpt.isPresent()) {
-                        Optional<Equipe> equipeOpt = clubOpt.get().getEquipes()
-                                .stream()
-                                .filter(e ->
-                                        e.getNiveau().name().equalsIgnoreCase(niveauStr)
-                                                || e.getNiveau().getNom().equalsIgnoreCase(niveauStr)
-                                )
-                                .findFirst();
-
-                        if (equipeOpt.isPresent()) {
-                            Optional<Joueur> joueurOpt = equipeOpt.get().getJoueur()
-                                    .stream()
-                                    .filter(j ->
-                                            j.getNom().equalsIgnoreCase(nom)
-                                                    && j.getPrenom().equalsIgnoreCase(prenom))
-                                    .findFirst();
-
-                            if (joueurOpt.isPresent()) {
-                                model.supprimerJoueur(equipeOpt.get(), joueurOpt.get());
-                                JsonExporter.exporter(model.recupererClubs());
-                            }
-                        }
+                        model.supprimerClub(clubOpt.get());
                     }
 
                     exchange.getResponseHeaders().set(
@@ -130,7 +107,7 @@ public class ApiServer {
                     );
 
                     send(exchange, 200,
-                            "{\"success\":true,\"message\":\"Joueur supprimé\"}");
+                            "{\"success\":true,\"message\":\"Club supprimé\"}");
                     return;
                 }
 
@@ -175,7 +152,7 @@ public class ApiServer {
                     );
 
                     model.ajouterEquipe(clubOpt.get(), equipe);
-                    JsonExporter.exporter(model.recupererClubs());
+                    
 
                     send(exchange, 200,
                             "{\"success\":true,\"message\":\"Équipe créée\"}");
@@ -203,7 +180,7 @@ public class ApiServer {
 
                         if (equipeOpt.isPresent()) {
                             model.supprimerEquipe(club, equipeOpt.get());
-                            JsonExporter.exporter(model.recupererClubs());
+                            
                         }
                     }
 
@@ -270,7 +247,7 @@ public class ApiServer {
                     joueur.setEstTitulaire(Boolean.parseBoolean(titulaireStr));
 
                     model.ajouterJoueur(equipeOpt.get(), joueur);
-                    JsonExporter.exporter(model.recupererClubs());
+                    
 
                     send(exchange, 200,
                             "{\"success\":true,\"message\":\"Joueur ajouté\"}");
@@ -310,7 +287,7 @@ public class ApiServer {
                                         equipeOpt.get(),
                                         joueurOpt.get()
                                 );
-                                JsonExporter.exporter(model.recupererClubs());
+                                
                             }
                         }
                     }
