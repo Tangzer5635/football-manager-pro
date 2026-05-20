@@ -24,6 +24,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public class ApiServer {
@@ -68,6 +69,39 @@ public class ApiServer {
                     return;
                 }
 
+                // GET /clubs -> récupérer tous les clubs
+                if ("GET".equals(exchange.getRequestMethod())) {
+                    List<Club> clubs = model.recupererClubs();
+
+                    StringBuilder json = new StringBuilder("[");
+                    for (int i = 0; i < clubs.size(); i++) {
+                        Club club = clubs.get(i);
+
+                        json.append("{")
+                                .append("\"nom\":\"")
+                                .append(club.getNom().replace("\"", "\\\""))
+                                .append("\",")
+                                .append("\"dateCreation\":\"")
+                                .append(club.getDateCreation())
+                                .append("\"")
+                                .append("}");
+
+                        if (i < clubs.size() - 1) {
+                            json.append(",");
+                        }
+                    }
+                    json.append("]");
+
+                    exchange.getResponseHeaders().set(
+                            "Content-Type",
+                            "application/json; charset=UTF-8"
+                    );
+
+                    send(exchange, 200, json.toString());
+                    return;
+                }
+
+                // POST /clubs -> créer un club
                 if ("POST".equals(exchange.getRequestMethod())) {
                     String body = readBody(exchange);
 
@@ -81,15 +115,20 @@ public class ApiServer {
 
                     model.ajouterClub(club);
 
+                    exchange.getResponseHeaders().set(
+                            "Content-Type",
+                            "application/json; charset=UTF-8"
+                    );
+
                     send(exchange, 200,
                             "{\"success\":true,\"message\":\"Club créé\"}");
                     return;
                 }
 
+                // DELETE /clubs -> supprimer un club
                 if ("DELETE".equals(exchange.getRequestMethod())) {
                     String body = readBody(exchange);
 
-                    // Le front envoie simplement : nom=NomDuClub
                     String nom = getParam(body, "nom");
 
                     Optional<Club> clubOpt = model.recupererClubs()
@@ -111,7 +150,9 @@ public class ApiServer {
                     return;
                 }
 
-                send(exchange, 405, "{\"error\":\"Méthode non autorisée\"}");
+                // Méthode non autorisée
+                send(exchange, 405,
+                        "{\"error\":\"Méthode non autorisée\"}");
             });
 
             // ==========================
@@ -156,6 +197,48 @@ public class ApiServer {
 
                     send(exchange, 200,
                             "{\"success\":true,\"message\":\"Équipe créée\"}");
+                    return;
+                }
+
+                // GET /equipes -> récupérer toutes les équipes
+                if ("GET".equals(exchange.getRequestMethod())) {
+                    List<Club> clubs = model.recupererClubs();
+
+                    StringBuilder json = new StringBuilder("[");
+                    boolean first = true;
+
+                    for (Club club : clubs) {
+                        for (Equipe equipe : club.getEquipes()) {
+
+                            if (!first) {
+                                json.append(",");
+                            }
+                            first = false;
+
+                            json.append("{")
+                                    .append("\"clubNom\":\"")
+                                    .append(club.getNom().replace("\"", "\\\""))
+                                    .append("\",")
+                                    .append("\"niveau\":\"")
+                                    .append(equipe.getNiveau().name())
+                                    .append("\",")
+                                    .append("\"entraineur\":\"")
+                                    .append(equipe.getEntraineur()
+                                            .presentation()
+                                            .replace("\"", "\\\""))
+                                    .append("\"")
+                                    .append("}");
+                        }
+                    }
+
+                    json.append("]");
+
+                    exchange.getResponseHeaders().set(
+                            "Content-Type",
+                            "application/json; charset=UTF-8"
+                    );
+
+                    send(exchange, 200, json.toString());
                     return;
                 }
 
@@ -251,6 +334,65 @@ public class ApiServer {
 
                     send(exchange, 200,
                             "{\"success\":true,\"message\":\"Joueur ajouté\"}");
+                    return;
+                }
+
+                // GET /joueurs -> récupérer tous les joueurs
+                if ("GET".equals(exchange.getRequestMethod())) {
+                    List<Club> clubs = model.recupererClubs();
+
+                    StringBuilder json = new StringBuilder("[");
+                    boolean first = true;
+
+                    for (Club club : clubs) {
+                        for (Equipe equipe : club.getEquipes()) {
+                            for (Joueur joueur : equipe.getJoueur()) {
+
+                                if (!first) {
+                                    json.append(",");
+                                }
+                                first = false;
+
+                                json.append("{")
+                                        .append("\"clubNom\":\"")
+                                        .append(club.getNom().replace("\"", "\\\""))
+                                        .append("\",")
+                                        .append("\"niveau\":\"")
+                                        .append(equipe.getNiveau().name())
+                                        .append("\",")
+                                        .append("\"nom\":\"")
+                                        .append(joueur.getNom().replace("\"", "\\\""))
+                                        .append("\",")
+                                        .append("\"prenom\":\"")
+                                        .append(joueur.getPrenom().replace("\"", "\\\""))
+                                        .append("\",")
+                                        .append("\"dateNaissance\":\"")
+                                        .append(joueur.getDateNaissance())
+                                        .append("\",")
+                                        .append("\"age\":")
+                                        .append(joueur.age())
+                                        .append(",")
+                                        .append("\"poste\":\"")
+                                        .append(joueur.getPoste())
+                                        .append("\",")
+                                        .append("\"prix\":")
+                                        .append(joueur.getPrix())
+                                        .append(",")
+                                        .append("\"titulaire\":")
+                                        .append(joueur.isEstTitulaire())
+                                        .append("}");
+                            }
+                        }
+                    }
+
+                    json.append("]");
+
+                    exchange.getResponseHeaders().set(
+                            "Content-Type",
+                            "application/json; charset=UTF-8"
+                    );
+
+                    send(exchange, 200, json.toString());
                     return;
                 }
 

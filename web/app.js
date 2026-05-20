@@ -1,34 +1,92 @@
-// ===================================================================
-// app.js - Version complète avec API Java
-// Fonctionnalités :
-// - Affichage dashboard
-// - Liste des clubs, équipes, joueurs, titulaires
-// - Création de clubs
-// - Création d'équipes
-// - Ajout de joueurs
-// - Suppression de clubs, équipes et joueurs
-// ===================================================================
-
 let data = {clubs: []};
 
-// ===================================================================
-// CHARGEMENT DES DONNÉES
-// ===================================================================
 async function chargerDonnees() {
     try {
-        const response = await fetch("http://localhost:8080/data");
+        const [clubsResponse, equipesResponse, joueursResponse] =
+            await Promise.all([
+                fetch("http://localhost:8080/clubs"),
+                fetch("http://localhost:8080/equipes"),
+                fetch("http://localhost:8080/joueurs")
+            ]);
 
-        if (!response.ok) {
-            throw new Error("Impossible de charger les données");
+        if (!clubsResponse.ok) {
+            throw new Error("Impossible de charger les clubs.");
         }
 
-        data = await response.json();
+        if (!equipesResponse.ok) {
+            throw new Error("Impossible de charger les équipes.");
+        }
+
+        if (!joueursResponse.ok) {
+            throw new Error("Impossible de charger les joueurs.");
+        }
+
+        const clubs = await clubsResponse.json();
+        const equipes = await equipesResponse.json();
+        const joueurs = await joueursResponse.json();
+
+        data = {
+            clubs: clubs.map(club => ({
+                nom: club.nom,
+                dateCreation: club.dateCreation,
+                equipes: []
+            }))
+        };
+
+        equipes.forEach(equipe => {
+            const club = data.clubs.find(
+                c => c.nom === equipe.clubNom
+            );
+
+            if (!club) {
+                return;
+            }
+
+            club.equipes.push({
+                niveau: equipe.niveau,
+                entraineur: equipe.entraineur,
+                joueurs: []
+            });
+        });
+
+        joueurs.forEach(joueur => {
+            const club = data.clubs.find(
+                c => c.nom === joueur.clubNom
+            );
+
+            if (!club) {
+                return;
+            }
+
+            const equipe = club.equipes.find(
+                e => e.niveau === joueur.niveau
+            );
+
+            if (!equipe) {
+                return;
+            }
+
+            equipe.joueurs.push({
+                nom: joueur.nom,
+                prenom: joueur.prenom,
+                dateNaissance: joueur.dateNaissance,
+                age: joueur.age,
+                poste: joueur.poste,
+                prix: Number(joueur.prix || 0),
+                titulaire: Boolean(joueur.titulaire)
+            });
+        });
+
+        console.log("Données chargées :", data);
+
     } catch (error) {
-        console.error(error);
-        data = {clubs: []};
+        console.error("Erreur lors du chargement des données :", error);
+
+        data = {
+            clubs: []
+        };
     }
 }
-
 // ===================================================================
 // INITIALISATION
 // ===================================================================
@@ -196,13 +254,32 @@ function afficherEquipes(title, subtitle, content) {
     let rows = "";
     let index = 1;
 
+    const formatNiveau = (niveau) => {
+        const mapping = {
+            LIGUE_1: "Ligue 1",
+            LIGUE_2: "Ligue 2",
+            NATIONAL_1: "National 1",
+            NATIONAL_2: "National",
+            NATIONAL_3: "National 2",
+            REGIONAL_1: "Régional 1",
+            REGIONAL_2: "Régional 2",
+            REGIONAL_3: "Régional 3",
+            DEPARTEMENTAL_1: "Départemental 1",
+            DEPARTEMENTAL_2: "Départemental 2",
+            DEPARTEMENTAL_3: "Départemental 3",
+            DEPARTEMENTAL_4: "Départemental 4"
+        };
+
+        return mapping[niveau] || niveau;
+    };
+
     data.clubs.forEach(club => {
         club.equipes.forEach(equipe => {
             rows += `
                 <tr>
                     <td>${index++}</td>
                     <td>${club.nom}</td>
-                    <td>${equipe.niveau}</td>
+                    <td>${formatNiveau(equipe.niveau)}</td>
                     <td>${equipe.entraineur}</td>
                     <td>${equipe.joueurs.length}</td>
                     <td>
@@ -394,117 +471,44 @@ function formatPrix(prix) {
 // ===================================================================
 function afficherTitulaires(title, subtitle, content) {
     title.textContent = "Titulaires";
-    subtitle.textContent = "Recherche des joueurs titulaires par équipe";
+    subtitle.textContent = "Liste des joueurs titulaires";
 
-    // Liste de toutes les équipes
-    let options = '<option value="">Toutes les équipes</option>';
-
-    data.clubs.forEach(club => {
-        club.equipes.forEach(equipe => {
-            const valeur = `${club.nom}|${equipe.niveau}`;
-            const label = `${club.nom} - ${equipe.niveau}`;
-
-            options += `
-                <option value="${escapeJs(valeur)}">
-                    ${label}
-                </option>
-            `;
-        });
-    });
-
-    content.innerHTML = `
-        <div class="card">
-            <div class="form-group">
-                <label for="filtre-equipe">
-                    Rechercher les titulaires par équipe
-                </label>
-
-                <select id="filtre-equipe"
-                        onchange="filtrerTitulairesParEquipe()">
-                    ${options}
-                </select>
-            </div>
-        </div>
-
-        <div id="titulaires-resultats" class="cards grid"></div>
-    `;
-
-    // Affiche tous les titulaires au chargement
-    filtrerTitulairesParEquipe();
-}
-
-// ===================================================================
-// AJOUTE CETTE FONCTION dans app.js
-// ===================================================================
-function filtrerTitulairesParEquipe() {
-    const select = document.getElementById("filtre-equipe");
-    const container = document.getElementById("titulaires-resultats");
-
-    if (!select || !container) {
-        return;
-    }
-
-    const filtre = select.value;
     let cards = "";
 
     data.clubs.forEach(club => {
         club.equipes.forEach(equipe => {
+            equipe.joueurs.forEach(joueur => {
+                if (!joueur.titulaire) return;
 
-            // Filtre sur l'équipe sélectionnée
-            if (filtre) {
-                const valeur = `${club.nom}|${equipe.niveau}`;
-
-                if (valeur !== filtre) {
-                    return;
-                }
-            }
-
-            // Récupère uniquement les titulaires
-            const titulaires = equipe.joueurs.filter(
-                joueur => joueur.titulaire === true
-            );
-
-            if (titulaires.length === 0) {
-                return;
-            }
-
-            const liste = titulaires.map(joueur => {
-                const age =
-                    joueur.age ??
-                    (joueur.dateNaissance
-                        ? calculerAge(joueur.dateNaissance)
-                        : "?");
-
-                return `
-                    <p>
-                        ⚽ <strong>${joueur.prenom} ${joueur.nom}</strong><br>
-                        ${joueur.poste} • ${age} ans • ${formatPrix(joueur.prix)}
-                    </p>
-                `;
-            }).join("");
-
-            cards += `
-                <div class="card">
-                    <h3>🏟️ ${club.nom}</h3>
-                    <p><strong>Niveau :</strong> ${equipe.niveau}</p>
-                    <div style="margin-top: 12px;">
-                        ${liste}
+                cards += `
+                    <div class="card">
+                        <h3>⭐ ${joueur.prenom} ${joueur.nom}</h3>
+                        <p><strong>Poste :</strong> ${joueur.poste}</p>
+                        <p><strong>Valeur :</strong> ${formatPrix(joueur.prix)}</p>
+                        <p><strong>Club :</strong> ${club.nom}</p>
+                        <p><strong>Niveau :</strong> ${equipe.niveau}</p>
                     </div>
-                </div>
-            `;
+                `;
+            });
         });
     });
 
-    if (cards === "") {
-        container.innerHTML = `
-            <div class="card">
-                <h3>Aucun titulaire</h3>
-                <p>Aucun joueur titulaire trouvé pour cette équipe.</p>
-            </div>
-        `;
-    } else {
-        container.innerHTML = cards;
+    content.innerHTML = `
+    ${
+        cards === ""
+            ? `
+                <div class="card">
+                    <h3>Aucun titulaire</h3>
+                    <p>Aucun joueur titulaire trouvé.</p>
+                </div>
+            `
+            : `
+                <div class="cards grid">
+                    ${cards}
+                </div>
+            `
     }
+`;
 }
 
 // ===================================================================
@@ -926,6 +930,25 @@ function chargerEquipesPourJoueur() {
     const selectEquipe =
         document.getElementById("joueur-equipe");
 
+    const formatNiveau = (niveau) => {
+        const mapping = {
+            LIGUE_1: "Ligue 1",
+            LIGUE_2: "Ligue 2",
+            NATIONAL_1: "National 1",
+            NATIONAL_2: "National",
+            NATIONAL_3: "National 2",
+            REGIONAL_1: "Régional 1",
+            REGIONAL_2: "Régional 2",
+            REGIONAL_3: "Régional 3",
+            DEPARTEMENTAL_1: "Départemental 1",
+            DEPARTEMENTAL_2: "Départemental 2",
+            DEPARTEMENTAL_3: "Départemental 3",
+            DEPARTEMENTAL_4: "Départemental 4"
+        };
+
+        return mapping[niveau] || niveau;
+    };
+
     selectEquipe.innerHTML = "";
 
     const club = data.clubs.find(c => c.nom === clubNom);
@@ -937,7 +960,7 @@ function chargerEquipesPourJoueur() {
     club.equipes.forEach(equipe => {
         const option = document.createElement("option");
         option.value = equipe.niveau;
-        option.textContent = equipe.niveau;
+        option.textContent = formatNiveau(equipe.niveau);
         selectEquipe.appendChild(option);
     });
 }

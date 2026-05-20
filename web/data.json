@@ -6,38 +6,8 @@
       "equipes": [
         {
           "niveau": "L1",
-          "entraineur": "Le Buhé Tanguy",
+          "entraineur": "Tanguy Le Buhé",
           "joueurs": [
-            {
-              "nom": "Le Buhé",
-              "prenom": "Tanguy",
-              "dateNaissance": "2004-10-29",
-              "age": 21,
-              "poste": "GARDIEN",
-              "prix": 1600000.0,
-              "titulaire": true
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "nom": "Football Club de Nantes",
-      "dateCreation": "1943-04-21",
-      "equipes": [
-        {
-          "niveau": "L2",
-          "entraineur": "Kantari Ahmed",
-          "joueurs": [
-            {
-              "nom": "Germain",
-              "prenom": "Swan",
-              "dateNaissance": "2001-04-07",
-              "age": 25,
-              "poste": "ATTAQUANT",
-              "prix": 1800000.0,
-              "titulaire": true
-            }
           ]
         }
       ]

@@ -5,6 +5,7 @@ import models.entities.Manage.Club;
 import models.entities.Manage.Equipe;
 
 import java.util.List;
+import java.util.Set;
 
 public interface IModel {
 
@@ -19,5 +20,7 @@ public interface IModel {
     //Affichage
 
     List<Club> recupererClubs();
+    Set<Equipe> recupererEquipesDuClub(int idClub);
+    Set<Joueur> recupererJoueursDeLEquipe(int idEquipe);
 
 }
