@@ -1703,7 +1703,8 @@ async function afficherClassement(
     subtitle,
     content
 ) {
-
+    console.log("idClub reçu :", idClub);
+    console.log("clubs :", data.clubs);
     title.textContent = "Classement";
 
     subtitle.textContent =
@@ -1720,12 +1721,6 @@ async function afficherClassement(
 
         const classement =
             await response.json();
-
-        // Supabase peut retourner un objet d'erreur au lieu d'un tableau
-        if (!response.ok || !Array.isArray(classement)) {
-            const msg = classement?.message || classement?.hint || JSON.stringify(classement);
-            throw new Error("Supabase : " + msg);
-        }
 
         if (classement.length === 0) {
             content.innerHTML = `
@@ -1763,7 +1758,7 @@ async function afficherClassement(
 
             html += `
                 <tr class="classement-row"
-                    onclick="afficherHistoriqueClub(${club.id_club}, '${club.nom_club}')"
+                    onclick="afficherHistoriqueClub(${club.id}, '${club.nom_club}')"
                     style="cursor:pointer;"
                     title="Voir l'historique des matchs">
                     <td>${index + 1}</td>
