@@ -593,9 +593,16 @@ async function creerClub() {
         return;
     }
 
+    const dateCreation =
+        prompt("Date de création (YYYY-MM-DD) :");
+
+    if (!dateCreation) {
+        return;
+    }
+
     try {
 
-        await fetch(
+        const response = await fetch(
             `${SUPABASE_URL}/club`,
             {
                 method: "POST",
@@ -609,13 +616,21 @@ async function creerClub() {
 
                 body: JSON.stringify({
                     nom_club: nom,
-                    date_creation:
-                        new Date()
-                            .toISOString()
-                            .split("T")[0]
+                    date_creation: dateCreation
                 })
             }
         );
+
+        if (!response.ok) {
+            const erreur =
+                await response.text();
+
+            console.error(erreur);
+
+            alert(erreur);
+
+            return;
+        }
 
         await chargerDonnees();
 
@@ -623,9 +638,10 @@ async function creerClub() {
 
     } catch (error) {
 
-        console.error(
-            "Erreur création club :",
-            error
+        console.error(error);
+
+        alert(
+            "Erreur création club."
         );
     }
 }
