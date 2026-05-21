@@ -1445,9 +1445,9 @@ function afficherPresentationJoueur(joueur) {
             <div class="modal-body">
                 <div class="player-profile">
                     <div class="player-details">
-                        <h3 class="player-name">
-                            ${joueur.prenom} ${joueur.nom}
-                        </h3>
+                        <h3 class="player-name">${joueur.prenom} ${joueur.nom}</h3>
+                        <p><strong>Âge :</strong> ${age} ans</p>
+                        <p><strong>Poste :</strong> ${joueur.poste}</p>
 
                         <div class="player-info">
                             <p><strong>Âge :</strong> ${age} ans</p>
