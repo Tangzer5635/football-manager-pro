@@ -1722,6 +1722,24 @@ async function afficherClassement(
         const classement =
             await response.json();
 
+        console.log("Reponse classement :", classement);
+
+        // Supabase peut retourner un objet d'erreur au lieu d'un tableau
+        if (!response.ok || !Array.isArray(classement)) {
+            const msg = classement?.message || classement?.hint || JSON.stringify(classement);
+            throw new Error("Supabase : " + msg);
+        }
+
+        if (classement.length === 0) {
+            content.innerHTML = `
+                <div class="card">
+                    <h3>Aucun resultat</h3>
+                    <p>Aucun match enregistre pour le moment.</p>
+                </div>
+            `;
+            return;
+        }
+
         let html = `
             <div class="table-wrapper">
 
@@ -1743,7 +1761,6 @@ async function afficherClassement(
 
                     <tbody>
         `;
-        console.log(classement);
 
         classement.forEach((club, index) => {
 
@@ -1788,7 +1805,8 @@ async function afficherClassement(
 
         content.innerHTML = `
             <div class="card">
-                ❌ Impossible de charger le classement
+                ❌ Impossible de charger le classement<br>
+                <small style="color:#888">${error.message}</small>
             </div>
         `;
     }
