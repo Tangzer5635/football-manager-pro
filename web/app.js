@@ -1794,6 +1794,11 @@ async function afficherClassement(
 
 async function ajouterMatch() {
 
+    const id_championnat =
+        parseInt(
+            document.getElementById("championnat").value
+        );
+
     const equipe_domicile =
         parseInt(
             document.getElementById("domicile").value
@@ -1848,6 +1853,9 @@ async function ajouterMatch() {
                 },
 
                 body: JSON.stringify({
+
+                    id_championnat:
+                    id_championnat,
 
                     equipe_domicile:
                     equipe_domicile,
