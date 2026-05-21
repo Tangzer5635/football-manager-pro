@@ -1794,11 +1794,6 @@ async function afficherClassement(
 
 async function ajouterMatch() {
 
-    const id_championnat =
-        parseInt(
-            document.getElementById("championnat").value
-        );
-
     const equipe_domicile =
         parseInt(
             document.getElementById("domicile").value
@@ -2048,9 +2043,54 @@ async function afficherMatchs(title, subtitle, content) {
     `;
 }
 
-
-
 function ouvrirModalMatch() {
+
+    document.getElementById("modal-match")
+        .style.display = "flex";
+
+    chargerNiveauxMatch();
+}
+
+function fermerModalMatch() {
+
+    document.getElementById("modal-match")
+        .style.display = "none";
+}
+
+function chargerNiveauxMatch() {
+
+    const niveauSelect =
+        document.getElementById("niveau");
+
+    const niveaux = new Set();
+
+    data.clubs.forEach(club => {
+
+        club.equipes.forEach(equipe => {
+
+            niveaux.add(equipe.niveau);
+
+        });
+    });
+
+    niveauSelect.innerHTML = "";
+
+    niveaux.forEach(niveau => {
+
+        niveauSelect.innerHTML += `
+            <option value="${niveau}">
+                ${niveau}
+            </option>
+        `;
+    });
+
+    chargerEquipesMatch();
+}
+
+function chargerEquipesMatch() {
+
+    const niveau =
+        document.getElementById("niveau").value;
 
     const domicile =
         document.getElementById("domicile");
@@ -2064,29 +2104,17 @@ function ouvrirModalMatch() {
 
         club.equipes.forEach(equipe => {
 
-            options += `
-                <option value="${equipe.id}">
-                    ${club.nom} - ${equipe.niveau}
-                </option>
-            `;
+            if (equipe.niveau === niveau) {
+
+                options += `
+                    <option value="${equipe.id}">
+                        ${club.nom}
+                    </option>
+                `;
+            }
         });
     });
 
     domicile.innerHTML = options;
     exterieur.innerHTML = options;
-
-    document.getElementById("modal-match")
-        .style.display = "flex";
-}
-
-function fermerModalMatch() {
-
-    document.getElementById("modal-match")
-        .style.display = "none";
-}
-
-function fermerModalMatch() {
-
-    document.getElementById("modal-match")
-        .style.display = "none";
 }
