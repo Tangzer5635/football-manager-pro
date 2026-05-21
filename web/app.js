@@ -150,11 +150,32 @@ async function chargerDonnees() {
                                     6: "National 3",
                                 }[equipe.id_niveau] || "Inconnu",
 
-                            joueurs: joueurs.filter(
-                                joueur =>
-                                    joueur.id_equipe ===
-                                    equipe.id_equipe
-                            )
+                            joueurs: joueurs
+                                .filter(
+                                    joueur =>
+                                        joueur.id_equipe ===
+                                        equipe.id_equipe
+                                )
+                                .map(joueur => {
+
+                                    const personne =
+                                        personnes.find(
+                                            p =>
+                                                p.id_personne ===
+                                                joueur.id_joueur
+                                        );
+
+                                    return {
+
+                                        ...joueur,
+
+                                        nom:
+                                            personne?.nom || "-",
+
+                                        prenom:
+                                            personne?.prenom || "-"
+                                    };
+                                })
                         };
                     })
             }))
@@ -1410,16 +1431,24 @@ function fermerModalJoueur() {
 async function soumettreAjoutJoueur() {
 
     const clubNom =
-        document.getElementById("joueur-club").value;
+        document.getElementById(
+            "joueur-club"
+        ).value;
 
     const niveau =
-        document.getElementById("joueur-equipe").value;
+        document.getElementById(
+            "joueur-equipe"
+        ).value;
 
     const nom =
-        document.getElementById("joueur-nom").value.trim();
+        document.getElementById(
+            "joueur-nom"
+        ).value.trim();
 
     const prenom =
-        document.getElementById("joueur-prenom").value.trim();
+        document.getElementById(
+            "joueur-prenom"
+        ).value.trim();
 
     const dateNaissance =
         document.getElementById(
@@ -1441,6 +1470,22 @@ async function soumettreAjoutJoueur() {
             "joueur-titulaire"
         ).checked;
 
+    if (
+        !clubNom ||
+        !niveau ||
+        !nom ||
+        !prenom ||
+        !dateNaissance ||
+        !poste ||
+        !prix
+    ) {
+        alert(
+            "Veuillez remplir tous les champs."
+        );
+
+        return;
+    }
+
     const club = data.clubs.find(
         c => c.nom === clubNom
     );
@@ -1451,7 +1496,7 @@ async function soumettreAjoutJoueur() {
     }
 
     const equipe = club.equipes.find(
-        e => String(e.niveau) === String(niveau)
+        e => e.niveau === niveau
     );
 
     if (!equipe) {
@@ -1461,27 +1506,96 @@ async function soumettreAjoutJoueur() {
 
     try {
 
+        // =====================================
+        // Récupération personnes
+        // =====================================
+        const personnesRes = await fetch(
+            `${SUPABASE_URL}/personne?select=id_personne`,
+            {
+                headers: {
+                    apikey: SUPABASE_API_KEY,
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                }
+            }
+        );
+
+        const personnes =
+            await personnesRes.json();
+
+        // =====================================
+        // Génération ID
+        // =====================================
+        const nouvelId =
+            Math.floor(
+                1000 +
+                Math.random() * 900000
+            );
+
+        // =====================================
+        // Création PERSONNE
+        // =====================================
         await fetch(
-            `${SUPABASE_URL}/joueurs`,
+            `${SUPABASE_URL}/personne`,
             {
                 method: "POST",
 
                 headers: {
-                    "Content-Type": "application/json",
-                    apikey: SUPABASE_API_KEY,
+                    "Content-Type":
+                        "application/json",
+
+                    apikey:
+                    SUPABASE_API_KEY,
+
                     Authorization:
                         `Bearer ${SUPABASE_API_KEY}`
                 },
 
                 body: JSON.stringify({
 
-                    prix: Number(prix),
+                    id_personne:
+                    nouvelId,
+
+                    nom:
+                    nom,
+
+                    prenom:
+                    prenom
+                })
+            }
+        );
+
+        // =====================================
+        // Création JOUEUR
+        // =====================================
+        const response = await fetch(
+            `${SUPABASE_URL}/joueurs`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json",
+
+                    apikey:
+                    SUPABASE_API_KEY,
+
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                },
+
+                body: JSON.stringify({
+
+                    id_joueur:
+                    nouvelId,
+
+                    prix:
+                        Number(prix),
 
                     date_naissance:
                     dateNaissance,
 
                     titulaire:
-
                     titulaire,
 
                     id_poste:
@@ -1495,6 +1609,19 @@ async function soumettreAjoutJoueur() {
                 })
             }
         );
+
+        if (!response.ok) {
+
+            console.log(
+                await response.text()
+            );
+
+            alert(
+                "Erreur création joueur."
+            );
+
+            return;
+        }
 
         fermerModalJoueur();
 
