@@ -80,7 +80,15 @@ async function chargerDonnees() {
 
                         id: equipe.id_equipe,
                         nom: equipe.nom_equipe,
-                        niveau: equipe.id_niveau,
+                        niveau:
+                            {
+                                1: "Ligue 1",
+                                2: "Ligue 2",
+                                3: "Ligue 3",
+                                4: "National",
+                                5: "National 2",
+                                6: "National 3",
+                            }[equipe.id_niveau] || "Inconnu",
                         joueurs: joueurs.filter(
                             joueur =>
                                 joueur.id_equipe ===
@@ -1087,21 +1095,31 @@ function fermerModalEquipe() {
 async function soumettreCreationEquipe() {
 
     const clubNom =
-        document.getElementById("equipe-club").value;
+        document.getElementById(
+            "equipe-club"
+        ).value;
 
     const niveau =
-        document.getElementById("equipe-niveau").value;
+        document.getElementById(
+            "equipe-niveau"
+        ).value;
 
     const nom =
-        document.getElementById("entraineur-nom").value.trim();
+        document.getElementById(
+            "entraineur-nom"
+        ).value.trim();
 
     const prenom =
-        document.getElementById("entraineur-prenom").value.trim();
+        document.getElementById(
+            "entraineur-prenom"
+        ).value.trim();
 
-    if (!clubNom || !niveau || !nom || !prenom) {
-        afficherErreurModal(
-            "Veuillez remplir tous les champs."
+    if (!clubNom || !niveau) {
+
+        alert(
+            "Veuillez remplir les champs."
         );
+
         return;
     }
 
@@ -1110,22 +1128,28 @@ async function soumettreCreationEquipe() {
     );
 
     if (!club) {
-        afficherErreurModal(
+
+        alert(
             "Club introuvable."
         );
+
         return;
     }
 
     try {
 
-        await fetch(
+        const response = await fetch(
             `${SUPABASE_URL}/equipe`,
             {
                 method: "POST",
 
                 headers: {
-                    "Content-Type": "application/json",
-                    apikey: SUPABASE_API_KEY,
+                    "Content-Type":
+                        "application/json",
+
+                    apikey:
+                    SUPABASE_API_KEY,
+
                     Authorization:
                         `Bearer ${SUPABASE_API_KEY}`
                 },
@@ -1146,15 +1170,30 @@ async function soumettreCreationEquipe() {
             }
         );
 
+        if (!response.ok) {
+
+            console.log(
+                await response.text()
+            );
+
+            alert(
+                "Erreur création équipe."
+            );
+
+            return;
+        }
+
         fermerModalEquipe();
 
-        await rafraichir("equipes");
+        await chargerDonnees();
+
+        showPage("equipes");
 
     } catch (error) {
 
         console.error(error);
 
-        afficherErreurModal(
+        alert(
             "Erreur création équipe."
         );
     }
