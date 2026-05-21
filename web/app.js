@@ -1972,7 +1972,7 @@ async function ajouterMatch() {
 }
 async function afficherHistoriqueClub(idClub, nomClub) {
 
-    const club = data.clubs.find(c => c.id === idClub);
+    const club = data.clubs.find(c => String(c.id) === String(idClub));
     if (!club || !club.equipes.length) {
         alert("Aucune équipe trouvée pour ce club.");
         return;
