@@ -1747,7 +1747,7 @@ async function afficherClassement(
 
         classement.forEach((club, index) => {
 
-                    html += `
+            html += `
                 <tr>
         
                     <td>${index + 1}</td>
@@ -1874,11 +1874,23 @@ async function ajouterMatch() {
     const equipe_exterieur =
         document.getElementById("exterieur").value;
 
+    // Validation : les deux clubs doivent être différents
+    if (equipe_domicile === equipe_exterieur) {
+        alert("❌ Les deux équipes doivent être différentes !");
+        return;
+    }
+
     const score_domicile =
-        document.getElementById("scoreDom").value;
+        parseInt(document.getElementById("scoreDom").value, 10);
 
     const score_exterieur =
-        document.getElementById("scoreExt").value;
+        parseInt(document.getElementById("scoreExt").value, 10);
+
+    // Validation : les scores doivent être des nombres valides
+    if (isNaN(score_domicile) || isNaN(score_exterieur)) {
+        alert("❌ Veuillez saisir des scores valides.");
+        return;
+    }
 
     const response = await fetch(
         "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/matchs",
@@ -1907,6 +1919,8 @@ async function ajouterMatch() {
     if (response.ok) {
 
         alert("✅ Match ajouté !");
+        // Petit délai pour laisser Supabase recalculer la vue_classement
+        await new Promise(resolve => setTimeout(resolve, 500));
         showPage('classement');
 
     } else {
