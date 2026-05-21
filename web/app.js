@@ -476,8 +476,8 @@ async function afficherClassement(title, subtitle, content) {
     ).join("");
 
     content.innerHTML = `
-        <div class="page-actions" style="margin-bottom:16px;">
-            <select id="classement-niveau" onchange="rafraichirClassement()" style="padding:8px 12px;border-radius:6px;border:1px solid #ddd;font-size:14px;">
+        <div class="page-actions">
+            <select id="classement-niveau" class="niveau-select" onchange="rafraichirClassement()">
                 ${optionsNiveau}
             </select>
         </div>
@@ -528,19 +528,23 @@ async function chargerTableauClassement() {
             return;
         }
 
-        const rows = filtre.map((club, i) => `
+        const rows = filtre.map((club, i) => {
+            const rang = i + 1;
+            const rangClass = rang <= 3 ? `rang-${rang}` : "";
+            return `
             <tr>
-                <td>${i + 1}</td>
+                <td class="rang-cell ${rangClass}">${rang}</td>
                 <td><strong>${club.nom_club}</strong></td>
-                <td>${club.points}</td>
+                <td><strong>${club.points}</strong></td>
                 <td>${club.victoires}</td>
                 <td>${club.nuls}</td>
                 <td>${club.defaites}</td>
                 <td>${club.buts_pour}</td>
                 <td>${club.buts_contre}</td>
-                <td>${club.difference}</td>
+                <td>${club.difference >= 0 ? "+" : ""}${club.difference}</td>
             </tr>
-        `).join("");
+        `;
+        }).join("");
 
         container.innerHTML = `
             <div class="table-wrapper">
@@ -579,7 +583,7 @@ async function afficherMatchs(title, subtitle, content) {
 
     content.innerHTML = `
         <div class="page-actions" style="gap:12px;">
-            <select id="matchs-niveau" onchange="rafraichirMatchs()" style="padding:8px 12px;border-radius:6px;border:1px solid #ddd;font-size:14px;">
+            <select id="matchs-niveau" class="niveau-select" onchange="rafraichirMatchs()">
                 ${optionsNiveau}
             </select>
             <button class="action-btn" onclick="ouvrirModalMatch()">➕ Créer un match</button>
@@ -636,13 +640,15 @@ async function chargerTableauMatchs() {
         const rows = filtres.map(match => {
             const dom = equipeToClub[match.equipe_domicile] || "-";
             const ext = equipeToClub[match.equipe_exterieur] || "-";
+            const domWin = match.score_domicile > match.score_exterieur;
+            const extWin = match.score_exterieur > match.score_domicile;
             return `
                 <tr>
-                    <td><strong>${dom}</strong></td>
-                    <td style="font-weight:bold;text-align:center;font-size:18px;">
-                        ${match.score_domicile} - ${match.score_exterieur}
+                    <td style="font-weight:${domWin ? "800" : "500"};color:${domWin ? "white" : "#94a3b8"}">${dom}</td>
+                    <td class="score-cell">
+                        ${match.score_domicile}<span class="score-sep">—</span>${match.score_exterieur}
                     </td>
-                    <td><strong>${ext}</strong></td>
+                    <td style="font-weight:${extWin ? "800" : "500"};color:${extWin ? "white" : "#94a3b8"};text-align:right">${ext}</td>
                 </tr>
             `;
         }).join("");
