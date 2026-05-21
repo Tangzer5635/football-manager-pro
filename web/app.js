@@ -1762,26 +1762,19 @@ async function afficherClassement(
         classement.forEach((club, index) => {
 
             html += `
-                <tr>
-        
+                <tr class="classement-row"
+                    onclick="afficherHistoriqueClub(${club.id_club}, '${club.nom_club}')"
+                    style="cursor:pointer;"
+                    title="Voir l'historique des matchs">
                     <td>${index + 1}</td>
-        
-                    <td>${club.nom_club}</td>
-        
+                    <td><strong>${club.nom_club}</strong> <small style="color:#888;font-size:11px;">\u2192 historique</small></td>
                     <td>${club.points}</td>
-        
                     <td>${club.victoires}</td>
-        
                     <td>${club.nuls}</td>
-        
                     <td>${club.defaites}</td>
-        
                     <td>${club.buts_pour}</td>
-        
                     <td>${club.buts_contre}</td>
-        
                     <td>${club.difference}</td>
-        
                 </tr>
             `;
         });
@@ -1976,4 +1969,116 @@ async function ajouterMatch() {
         const msg = erreur?.message || JSON.stringify(erreur);
         afficherErreurMatch("❌ " + msg);
     }
+}
+async function afficherHistoriqueClub(idClub, nomClub) {
+
+    const club = data.clubs.find(c => c.id === idClub);
+    if (!club || !club.equipes.length) {
+        alert("Aucune équipe trouvée pour ce club.");
+        return;
+    }
+
+    const idEquipes = club.equipes.map(e => e.id);
+
+    // Récupérer tous les matchs où le club est impliqué (dom ou ext)
+    const promises = idEquipes.flatMap(id => [
+        fetch(`${SUPABASE_URL}/matchs?equipe_domicile=eq.${id}&select=*&order=date_match.desc`, {
+            headers: { apikey: SUPABASE_API_KEY, Authorization: `Bearer ${SUPABASE_API_KEY}` }
+        }),
+        fetch(`${SUPABASE_URL}/matchs?equipe_exterieur=eq.${id}&select=*&order=date_match.desc`, {
+            headers: { apikey: SUPABASE_API_KEY, Authorization: `Bearer ${SUPABASE_API_KEY}` }
+        })
+    ]);
+
+    const responses = await Promise.all(promises);
+    const jsons = await Promise.all(responses.map(r => r.json()));
+
+    // Fusionner et dédupliquer par id_match, trier par date desc
+    const matchsMap = new Map();
+    jsons.flat().forEach(m => matchsMap.set(m.id_match, m));
+    const matchs = Array.from(matchsMap.values()).sort((a, b) =>
+        new Date(b.date_match) - new Date(a.date_match)
+    );
+
+    // Map id_equipe -> nom club depuis data
+    const equipeToClub = {};
+    data.clubs.forEach(c => {
+        c.equipes.forEach(e => {
+            equipeToClub[e.id] = c.nom;
+        });
+    });
+
+    let lignes = "";
+
+    if (matchs.length === 0) {
+        lignes = `<tr><td colspan="5" style="text-align:center;color:#888;">Aucun match enregistré.</td></tr>`;
+    } else {
+        matchs.forEach(m => {
+            const domNom = equipeToClub[m.equipe_domicile] || `Équipe ${m.equipe_domicile}`;
+            const extNom = equipeToClub[m.equipe_exterieur] || `Équipe ${m.equipe_exterieur}`;
+            const date = m.date_match ? new Date(m.date_match).toLocaleDateString("fr-FR") : "-";
+            const sd = m.score_domicile;
+            const se = m.score_exterieur;
+            const estDom = idEquipes.includes(m.equipe_domicile);
+
+            let resultat, couleur;
+            if (sd === se) {
+                resultat = "N"; couleur = "#f59e0b";
+            } else if ((sd > se && estDom) || (se > sd && !estDom)) {
+                resultat = "V"; couleur = "#10b981";
+            } else {
+                resultat = "D"; couleur = "#ef4444";
+            }
+
+            lignes += `
+                <tr>
+                    <td style="color:#888;font-size:13px;">${date}</td>
+                    <td>${domNom}</td>
+                    <td style="font-weight:bold;text-align:center;">${sd} - ${se}</td>
+                    <td>${extNom}</td>
+                    <td style="text-align:center;">
+                        <span style="background:${couleur};color:white;border-radius:4px;padding:2px 8px;font-weight:bold;font-size:13px;">
+                            ${resultat}
+                        </span>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    modal.innerHTML = `
+        <div class="modal-overlay"></div>
+        <div class="modal-content" style="max-width:640px;width:90%;">
+            <div class="modal-header">
+                <h2>📅 Historique — ${nomClub}</h2>
+                <button class="modal-close">✕</button>
+            </div>
+            <div class="modal-body" style="overflow-x:auto;">
+                <p style="color:#888;margin-bottom:12px;">${matchs.length} match(s) joué(s)</p>
+                <table class="table" style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Domicile</th>
+                            <th style="text-align:center;">Score</th>
+                            <th>Extérieur</th>
+                            <th style="text-align:center;">Résultat</th>
+                        </tr>
+                    </thead>
+                    <tbody>${lignes}</tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn secondary-btn">Fermer</button>
+            </div>
+        </div>
+    `;
+
+    modal.querySelectorAll(".modal-close, .secondary-btn, .modal-overlay").forEach(btn => {
+        btn.addEventListener("click", () => modal.remove());
+    });
+
+    document.body.appendChild(modal);
 }
