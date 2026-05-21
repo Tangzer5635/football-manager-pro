@@ -38,7 +38,7 @@ async function chargerDonnees() {
                 ),
 
                 fetch(
-                    `${SUPABASE_URL}/equipe?select=*,personne(nom,prenom)`,
+                    `${SUPABASE_URL}/equipe?select=*`,
                     {
                         headers: {
                             apikey: SUPABASE_API_KEY,
@@ -83,8 +83,17 @@ async function chargerDonnees() {
             ]);
 
         const clubs = await clubsRes.json();
+
         const equipes = await equipesRes.json();
-        const joueurs = await joueursRes.json();
+
+        const personnes =
+            await personnesRes.json();
+
+        const entraineurs =
+            await entraineursRes.json();
+
+        const joueurs =
+            await joueursRes.json();
 
         data = {
             clubs: clubs.map(club => ({
@@ -854,7 +863,22 @@ async function supprimerEquipe(idEquipe) {
 
     try {
 
+        // Supprimer joueurs liés
         await fetch(
+            `${SUPABASE_URL}/joueurs?id_equipe=eq.${idEquipe}`,
+            {
+                method: "DELETE",
+
+                headers: {
+                    apikey: SUPABASE_API_KEY,
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                }
+            }
+        );
+
+        // Supprimer équipe
+        const response = await fetch(
             `${SUPABASE_URL}/equipe?id_equipe=eq.${idEquipe}`,
             {
                 method: "DELETE",
@@ -866,6 +890,19 @@ async function supprimerEquipe(idEquipe) {
                 }
             }
         );
+
+        if (!response.ok) {
+
+            console.log(
+                await response.text()
+            );
+
+            alert(
+                "Erreur suppression équipe."
+            );
+
+            return;
+        }
 
         await rafraichir("equipes");
 
@@ -959,7 +996,7 @@ async function creerNouvelleEquipe() {
             await personnesRes.json();
 
         const nouvelId =
-            personnes.length + 1;
+            Date.now();
 
         // =====================================
         // Création PERSONNE
