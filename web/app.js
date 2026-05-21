@@ -1708,11 +1708,11 @@ async function afficherClassement(
 
     subtitle.textContent =
         "Classement du championnat";
-
+    console.log(classement);
     try {
 
         const response = await fetch(
-            "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/vue_classement?select=*&apikey=sb_publishable_qCzHEqb9ulwCVpy_jZ-DQQ_OsGW5lcT"
+            "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/vue_classement?select=*&order=points.desc,difference.desc&apikey=" + SUPABASE_API_KEY
         );
 
         const classement =
@@ -1887,10 +1887,10 @@ async function ajouterMatch() {
                 "Content-Type": "application/json",
 
                 "apikey":
-                    "sb_publishable_qCzHEqb9ulwCVpy_jZ-DQQ_OsGW5lcT",
+                SUPABASE_API_KEY,
 
                 "Authorization":
-                    "Bearer sb_publishable_qCzHEqb9ulwCVpy_jZ-DQQ_OsGW5lcT"
+                    `Bearer ${SUPABASE_API_KEY}`
             },
 
             body: JSON.stringify({
@@ -1906,14 +1906,16 @@ async function ajouterMatch() {
 
         alert("✅ Match ajouté !");
 
+        // Recharge directement le classement
         showPage('classement');
 
     } else {
 
-        const erreur = await response.text();
+        const erreur =
+            await response.text();
 
         console.error(erreur);
 
-        alert(erreur);
+        alert("❌ " + erreur);
     }
 }
