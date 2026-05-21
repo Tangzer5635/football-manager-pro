@@ -585,21 +585,49 @@ function filtrerTitulairesParEquipe() {
 // API - CLUBS
 // ===================================================================
 async function creerClub() {
-    const nom = prompt("Nom du club :");
-    if (!nom) return;
 
-    const dateCreation = prompt(
-        "Date de création (AAAA-MM-JJ) :",
-        new Date().toISOString().split("T")[0]
-    );
-    if (!dateCreation) return;
+    const nom =
+        prompt("Nom du club :");
 
-    await postForm("http://localhost:8080/clubs", {
-        nom,
-        dateCreation
-    });
+    if (!nom) {
+        return;
+    }
 
-    await rafraichir("clubs");
+    try {
+
+        await fetch(
+            `${SUPABASE_URL}/club`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+                    apikey: SUPABASE_API_KEY,
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                },
+
+                body: JSON.stringify({
+                    nom_club: nom,
+                    date_creation:
+                        new Date()
+                            .toISOString()
+                            .split("T")[0]
+                })
+            }
+        );
+
+        await chargerDonnees();
+
+        showPage("clubs");
+
+    } catch (error) {
+
+        console.error(
+            "Erreur création club :",
+            error
+        );
+    }
 }
 
 async function supprimerClub(nom) {
@@ -631,39 +659,60 @@ async function supprimerClub(nom) {
 // API - EQUIPES
 // ===================================================================
 async function creerEquipe() {
-    if (!data.clubs || data.clubs.length === 0) {
-        afficherErreurModal("Aucun club disponible.");
-        return;
+
+    const clubId =
+        document.getElementById(
+            "equipe-club"
+        ).value;
+
+    const nomEquipe =
+        document.getElementById(
+            "equipe-nom"
+        ).value;
+
+    const niveau =
+        document.getElementById(
+            "equipe-niveau"
+        ).value;
+
+    try {
+
+        await fetch(
+            `${SUPABASE_URL}/equipe`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+                    apikey: SUPABASE_API_KEY,
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                },
+
+                body: JSON.stringify({
+
+                    nom_equipe: nomEquipe,
+
+                    id_niveau: Number(niveau),
+
+                    id_club: Number(clubId),
+
+                    id_entraineur: 1
+                })
+            }
+        );
+
+        await chargerDonnees();
+
+        showPage("equipes");
+
+    } catch (error) {
+
+        console.error(
+            "Erreur création équipe :",
+            error
+        );
     }
-
-    const selectClub =
-        document.getElementById("equipe-club");
-
-    selectClub.innerHTML = "";
-
-    data.clubs.forEach(club => {
-        const option = document.createElement("option");
-        option.value = club.nom;
-        option.textContent = club.nom;
-        selectClub.appendChild(option);
-    });
-
-    document.getElementById("equipe-niveau").value =
-        "LIGUE_1";
-
-    document.getElementById("entraineur-nom").value = "";
-    document.getElementById("entraineur-prenom").value = "";
-
-    // Supprime les anciens messages d'erreur
-    const ancienneErreur =
-        document.getElementById("modal-error");
-
-    if (ancienneErreur) {
-        ancienneErreur.remove();
-    }
-
-    document.getElementById("modal-equipe")
-        .classList.remove("hidden");
 }
 
 async function supprimerEquipe(clubNom, niveau) {
@@ -681,49 +730,49 @@ async function supprimerEquipe(clubNom, niveau) {
 // API - JOUEURS
 // ===================================================================
 async function ajouterJoueur() {
-    if (!data.clubs || data.clubs.length === 0) {
-        alert("Aucun club disponible.");
-        return;
+    try {
+
+        await fetch(
+            `${SUPABASE_URL}/joueurs`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+                    apikey: SUPABASE_API_KEY,
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                },
+
+                body: JSON.stringify({
+
+                    prix: 1000000,
+
+                    date_naissance:
+                        "2000-01-01",
+
+                    titulaire: true,
+
+                    id_poste: 1,
+
+                    id_club: 1,
+
+                    id_equipe: 1
+                })
+            }
+        );
+
+        await chargerDonnees();
+
+        showPage("joueurs");
+
+    } catch (error) {
+
+        console.error(
+            "Erreur création joueur :",
+            error
+        );
     }
-
-    const prixInput = document.getElementById("joueur-prix");
-
-    let preview = document.getElementById("prix-preview");
-
-    if (!preview) {
-        preview = document.createElement("div");
-        preview.id = "prix-preview";
-        preview.className = "prix-preview";
-
-        prixInput.insertAdjacentElement("afterend", preview);
-    }
-
-    prixInput.addEventListener("input", mettreAJourApercuPrix);
-    mettreAJourApercuPrix();
-
-    const selectClub = document.getElementById("joueur-club");
-    selectClub.innerHTML = "";
-
-    data.clubs.forEach(club => {
-        const option = document.createElement("option");
-        option.value = club.nom;
-        option.textContent = club.nom;
-        selectClub.appendChild(option);
-    });
-
-    // Charge les équipes du premier club
-    chargerEquipesPourJoueur();
-
-    // Valeurs par défaut
-    document.getElementById("joueur-nom").value = "";
-    document.getElementById("joueur-prenom").value = "";
-    document.getElementById("joueur-date-naissance").value = "2000-01-01";
-    document.getElementById("joueur-poste").value = "ATTAQUANT";
-    document.getElementById("joueur-prix").value = 100000;
-    document.getElementById("joueur-titulaire").checked = false;
-
-    // Affiche le modal
-    document.getElementById("modal-joueur").classList.remove("hidden");
 }
 
 async function supprimerJoueur(clubNom, niveau, nom, prenom, age) {
