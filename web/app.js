@@ -1792,6 +1792,122 @@ async function afficherClassement(
     }
 }
 
+async function ajouterMatch() {
+
+    const equipe_domicile =
+        parseInt(
+            document.getElementById("domicile").value
+        );
+
+    const equipe_exterieur =
+        parseInt(
+            document.getElementById("exterieur").value
+        );
+
+    const score_domicile =
+        parseInt(
+            document.getElementById("scoreDom").value
+        );
+
+    const score_exterieur =
+        parseInt(
+            document.getElementById("scoreExt").value
+        );
+
+    if (
+        isNaN(equipe_domicile) ||
+        isNaN(equipe_exterieur)
+    ) {
+        alert("Sélectionnez les équipes");
+        return;
+    }
+
+    if (equipe_domicile === equipe_exterieur) {
+        alert("Les équipes doivent être différentes");
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            `${SUPABASE_URL}/matchs`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+
+                    apikey:
+                    SUPABASE_API_KEY,
+
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                },
+
+                body: JSON.stringify({
+
+                    equipe_domicile:
+                    equipe_domicile,
+
+                    equipe_exterieur:
+                    equipe_exterieur,
+
+                    score_domicile:
+                    score_domicile,
+
+                    score_exterieur:
+                    score_exterieur,
+
+                    date_match:
+                        new Date()
+                            .toISOString()
+                            .split("T")[0]
+                })
+            }
+        );
+
+        if (!response.ok) {
+
+            console.log(
+                await response.text()
+            );
+
+            alert(
+                "Erreur création match"
+            );
+
+            return;
+        }
+
+        fermerModalMatch();
+
+        await chargerDonnees();
+
+        const title =
+            document.getElementById("page-title");
+
+        const subtitle =
+            document.getElementById("page-subtitle");
+
+        const content =
+            document.getElementById("page-content");
+
+        afficherMatchs(
+            title,
+            subtitle,
+            content
+        );
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            "Erreur ajout match"
+        );
+    }
+}
+
 async function afficherMatchs(title, subtitle, content) {
 
     title.textContent = "Matchs";
@@ -1918,6 +2034,8 @@ async function afficherMatchs(title, subtitle, content) {
         </table>
     `;
 }
+
+
 
 function ouvrirModalMatch() {
 
