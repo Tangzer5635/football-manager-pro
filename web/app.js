@@ -556,6 +556,35 @@ function afficherJoueurs(title, subtitle, content) {
     });
 
     content.innerHTML = `
+
+    <div class="joueurs-filtres">
+
+        <input
+            type="text"
+            id="recherche-joueur"
+            placeholder="🔎 Rechercher un joueur..."
+            oninput="filtrerJoueurs()"
+        >
+
+        <select id="filtre-equipe"
+                onchange="filtrerJoueurs()">
+
+            <option value="">
+                Toutes les équipes
+            </option>
+
+            ${data.clubs.flatMap(club =>
+        club.equipes.map(equipe => `
+                    <option value="${club.nom} - ${equipe.niveau}">
+                        ${club.nom} - ${equipe.niveau}
+                    </option>
+                `)
+    ).join("")}
+
+        </select>
+
+    </div>
+
     <div class="page-actions">
         <button class="action-btn" onclick="ajouterJoueur()">
             ➕ Ajouter un joueur
@@ -565,9 +594,7 @@ function afficherJoueurs(title, subtitle, content) {
     ${
         cards === ""
             ? `
-                <div class="card joueur-card"
-     data-nom="${joueur.nom} ${joueur.prenom}"
-     data-equipe="${club.nom} - ${equipe.niveau}">
+                <div class="card">
                     <h3>Aucun joueur</h3>
                     <p>Aucun joueur trouvé.</p>
                 </div>
