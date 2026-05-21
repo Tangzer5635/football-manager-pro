@@ -953,6 +953,7 @@ function fermerModalEquipe() {
 }
 
 async function soumettreCreationEquipe() {
+
     const clubNom =
         document.getElementById("equipe-club").value;
 
@@ -965,7 +966,6 @@ async function soumettreCreationEquipe() {
     const prenom =
         document.getElementById("entraineur-prenom").value.trim();
 
-    // Vérifications
     if (!clubNom || !niveau || !nom || !prenom) {
         afficherErreurModal(
             "Veuillez remplir tous les champs."
@@ -973,49 +973,57 @@ async function soumettreCreationEquipe() {
         return;
     }
 
-    // Vérifier si le club existe
-    const club = data.clubs.find(c => c.nom === clubNom);
+    const club = data.clubs.find(
+        c => c.nom === clubNom
+    );
 
     if (!club) {
         afficherErreurModal(
-            "Le club sélectionné est introuvable."
-        );
-        return;
-    }
-
-    // Empêcher la création d'une équipe avec le même niveau
-    const equipeExiste = club.equipes.some(
-        e =>
-            e.niveau === niveau ||
-            e.niveau === niveau.replace("LIGUE_", "L")
-    );
-
-    if (equipeExiste) {
-        afficherErreurModal(
-            `Une équipe de niveau ${niveau} existe déjà dans ce club.`
+            "Club introuvable."
         );
         return;
     }
 
     try {
-        await postForm("http://localhost:8080/equipes", {
-            clubNom,
-            niveau,
-            nom,
-            prenom
-        });
 
-        // Ferme le modal
+        await fetch(
+            `${SUPABASE_URL}/equipe`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+                    apikey: SUPABASE_API_KEY,
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                },
+
+                body: JSON.stringify({
+
+                    nom_equipe:
+                        `Equipe ${niveau}`,
+
+                    id_niveau:
+                        Number(niveau),
+
+                    id_club:
+                        Number(club.id),
+
+                    id_entraineur: 1
+                })
+            }
+        );
+
         fermerModalEquipe();
 
-        // Recharge les données
         await rafraichir("equipes");
 
     } catch (error) {
+
         console.error(error);
 
         afficherErreurModal(
-            error.message || "Erreur lors de la création."
+            "Erreur création équipe."
         );
     }
 }
@@ -1070,6 +1078,7 @@ function fermerModalJoueur() {
 }
 
 async function soumettreAjoutJoueur() {
+
     const clubNom =
         document.getElementById("joueur-club").value;
 
@@ -1083,58 +1092,91 @@ async function soumettreAjoutJoueur() {
         document.getElementById("joueur-prenom").value.trim();
 
     const dateNaissance =
-        document.getElementById("joueur-date-naissance").value;
+        document.getElementById(
+            "joueur-date-naissance"
+        ).value;
 
     const poste =
-        document.getElementById("joueur-poste").value;
+        document.getElementById(
+            "joueur-poste"
+        ).value;
 
     const prix =
-        document.getElementById("joueur-prix").value;
+        document.getElementById(
+            "joueur-prix"
+        ).value;
 
     const titulaire =
-        document.getElementById("joueur-titulaire").checked;
+        document.getElementById(
+            "joueur-titulaire"
+        ).checked;
 
-    if (!clubNom || !niveau || !nom || !prenom || !dateNaissance) {
-        alert("Veuillez remplir tous les champs obligatoires.");
+    const club = data.clubs.find(
+        c => c.nom === clubNom
+    );
+
+    if (!club) {
+        alert("Club introuvable");
         return;
     }
 
-    // ======================================================
-    // CALCUL AUTOMATIQUE DE L'ÂGE
-    // ======================================================
-    const naissance = new Date(dateNaissance);
-    const aujourdHui = new Date();
+    const equipe = club.equipes.find(
+        e => String(e.niveau) === String(niveau)
+    );
 
-    let age = aujourdHui.getFullYear() - naissance.getFullYear();
-
-    const mois = aujourdHui.getMonth() - naissance.getMonth();
-
-    if (
-        mois < 0 ||
-        (mois === 0 &&
-            aujourdHui.getDate() < naissance.getDate())
-    ) {
-        age--;
+    if (!equipe) {
+        alert("Équipe introuvable");
+        return;
     }
 
     try {
-        await postForm("http://localhost:8080/joueurs", {
-            clubNom,
-            niveau,
-            nom,
-            prenom,
-            dateNaissance,
-            age,          // <-- âge envoyé au backend
-            poste,
-            prix,
-            titulaire
-        });
+
+        await fetch(
+            `${SUPABASE_URL}/joueurs`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+                    apikey: SUPABASE_API_KEY,
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                },
+
+                body: JSON.stringify({
+
+                    prix: Number(prix),
+
+                    date_naissance:
+                    dateNaissance,
+
+                    titulaire:
+
+                    titulaire,
+
+                    id_poste:
+                        Number(poste),
+
+                    id_club:
+                        Number(club.id),
+
+                    id_equipe:
+                        Number(equipe.id)
+                })
+            }
+        );
 
         fermerModalJoueur();
+
         await rafraichir("joueurs");
+
     } catch (error) {
+
         console.error(error);
-        alert(error.message);
+
+        alert(
+            "Erreur ajout joueur."
+        );
     }
 }
 
