@@ -537,6 +537,8 @@ function afficherJoueurs(title, subtitle, content) {
                          data-nom="${joueur.prenom} ${joueur.nom}"
                          data-equipe="${club.nom} - ${equipe.niveau}">
                         <h3>${joueur.prenom} ${joueur.nom}</h3>
+                        <p><strong>Âge :</strong> ${age} ans</p>
+                        <p><strong>Poste :</strong> ${joueur.poste}</p>
 
                         <div style="margin-top: 20px;">
                             <button class="action-btn"
@@ -1091,24 +1093,6 @@ async function creerNouvelleEquipe() {
     }
 
     try {
-
-        // =====================================
-        // Génération ID personne
-        // =====================================
-        const personnesRes = await fetch(
-            `${SUPABASE_URL}/personne?select=id_personne`,
-            {
-                headers: {
-                    apikey: SUPABASE_API_KEY,
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
-                }
-            }
-        );
-
-        const personnes =
-            await personnesRes.json();
-
         const nouvelId =
             Math.floor(
                 1000 +
@@ -1446,8 +1430,6 @@ function afficherPresentationJoueur(joueur) {
                 <div class="player-profile">
                     <div class="player-details">
                         <h3 class="player-name">${joueur.prenom} ${joueur.nom}</h3>
-                        <p><strong>Âge :</strong> ${age} ans</p>
-                        <p><strong>Poste :</strong> ${joueur.poste}</p>
 
                         <div class="player-info">
                             <p><strong>Âge :</strong> ${age} ans</p>
