@@ -1698,38 +1698,103 @@ function filtrerJoueurs() {
     });
 }
 
-function afficherClassement(title, subtitle, content) {
-
+async function afficherClassement(
+    title,
+    subtitle,
+    content
+) {
+    console.log("idClub reçu :", idClub);
+    console.log("clubs :", data.clubs);
     title.textContent = "Classement";
-    subtitle.textContent = "Classement des équipes";
 
-    let html = `
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Club</th>
-                    <th>Points</th>
+    subtitle.textContent =
+        "Classement du championnat";
+    try {
+
+        const response = await fetch(
+            "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/vue_classement?select=*&order=points.desc,difference.desc"
+            + "&apikey=" + SUPABASE_API_KEY,
+            {
+                cache: "no-store"
+            }
+        );
+
+        const classement =
+            await response.json();
+
+        if (classement.length === 0) {
+            content.innerHTML = `
+                <div class="card">
+                    <h3>Aucun resultat</h3>
+                    <p>Aucun match enregistre pour le moment.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = `
+            <div class="table-wrapper">
+
+                <table class="table">
+
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Club</th>
+                            <th>PTS</th>
+                            <th>V</th>
+                            <th>N</th>
+                            <th>D</th>
+                            <th>BP</th>
+                            <th>BC</th>
+                            <th>Diff</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+        `;
+
+        classement.forEach((club, index) => {
+
+            html += `
+                <tr class="classement-row"
+                    onclick="afficherHistoriqueClub(${club.id}, '${club.nom_club}')"
+                    style="cursor:pointer;"
+                    title="Voir l'historique des matchs">
+                    <td>${index + 1}</td>
+                    <td><strong>${club.nom_club}</strong> <small style="color:#888;font-size:11px;">\u2192 historique</small></td>
+                    <td>${club.points}</td>
+                    <td>${club.victoires}</td>
+                    <td>${club.nuls}</td>
+                    <td>${club.defaites}</td>
+                    <td>${club.buts_pour}</td>
+                    <td>${club.buts_contre}</td>
+                    <td>${club.difference}</td>
                 </tr>
-            </thead>
-            <tbody>
-    `;
-
-    classement.forEach((club, index) => {
+            `;
+        });
 
         html += `
-            <tr onclick="afficherHistoriqueClub(${club.id}, '${club.nom}')"
-                style="cursor:pointer;">
-                <td>${index + 1}</td>
-                <td>${club.nom}</td>
-                <td>${club.points}</td>
-            </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
         `;
-    });
 
-    html += `</tbody></table>`;
+        content.innerHTML = html;
 
-    content.innerHTML = html;
+    } catch (error) {
+
+        console.error(error);
+
+        content.innerHTML = `
+            <div class="card">
+                ❌ Impossible de charger le classement<br>
+                <small style="color:#888">${error.message}</small>
+            </div>
+        `;
+    }
 }
 
 async function afficherMatchs(
