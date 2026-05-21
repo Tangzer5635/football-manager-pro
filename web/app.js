@@ -1024,12 +1024,11 @@ async function creerNouvelleEquipe() {
 
         const nouvelId =
             Math.floor(
-                1000 + Math.random() * 900000
+                1000 +
+                Math.random() * 900000
             );
 
-        // =====================================
-        // Création PERSONNE
-        // =====================================
+// Création personne
         await fetch(
             `${SUPABASE_URL}/personne`,
             {
