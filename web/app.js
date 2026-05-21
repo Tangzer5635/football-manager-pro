@@ -274,11 +274,10 @@ function showPage(page) {
             afficherTitulaires(title, subtitle, content);
             break;
         case 'classement':
-            afficherClassement(
-                title,
-                subtitle,
-                content
-            );
+            afficherClassement(title, subtitle, content);
+            break;
+        case 'matchs':
+            afficherMatchs(title, subtitle, content);
             break;
     }
 }
@@ -1791,4 +1790,117 @@ async function afficherClassement(
             </div>
         `;
     }
+}
+
+async function afficherMatchs(
+    title,
+    subtitle,
+    content
+) {
+
+    title.textContent = "Matchs";
+
+    subtitle.textContent =
+        "Ajouter un résultat";
+
+    // récupérer clubs
+    const clubsResponse = await fetch(
+        "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/club?select=*"
+        + "&apikey=sb_publishable_qCzHEqb9ulwCVpy_jZ-DQQ_OsGW5lcT"
+    );
+
+    const clubs = await clubsResponse.json();
+
+    let options = "";
+
+    clubs.forEach(club => {
+
+        options += `
+            <option value="${club.id_club}">
+                ${club.nom_club}
+            </option>
+        `;
+    });
+
+    content.innerHTML = `
+        <div class="card">
+
+            <div class="form-group">
+                <label>Domicile</label>
+
+                <select id="domicile">
+                    ${options}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Extérieur</label>
+
+                <select id="exterieur">
+                    ${options}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Score domicile</label>
+
+                <input type="number" id="scoreDom">
+            </div>
+
+            <div class="form-group">
+                <label>Score extérieur</label>
+
+                <input type="number" id="scoreExt">
+            </div>
+
+            <button class="action-btn"
+                    onclick="ajouterMatch()">
+
+                ➕ Ajouter le match
+
+            </button>
+
+        </div>
+    `;
+}
+
+async function ajouterMatch() {
+
+    const equipe_domicile =
+        document.getElementById("domicile").value;
+
+    const equipe_exterieur =
+        document.getElementById("exterieur").value;
+
+    const score_domicile =
+        document.getElementById("scoreDom").value;
+
+    const score_exterieur =
+        document.getElementById("scoreExt").value;
+
+    await fetch(
+        "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/match",
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json",
+
+                "apikey":
+                    "sb_publishable_qCzHEqb9ulwCVpy_jZ-DQQ_OsGW5lcT",
+
+                "Authorization":
+                    "Bearer sb_publishable_qCzHEqb9ulwCVpy_jZ-DQQ_OsGW5lcT"
+            },
+
+            body: JSON.stringify({
+                equipe_domicile,
+                equipe_exterieur,
+                score_domicile,
+                score_exterieur
+            })
+        }
+    );
+
+    alert("✅ Match ajouté !");
 }
