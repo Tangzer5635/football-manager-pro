@@ -1699,60 +1699,105 @@ function filtrerJoueurs() {
     });
 }
 
-async function afficherClassement(title, subtitle, content) {
+async function afficherClassement(
+    title,
+    subtitle,
+    content
+) {
 
     title.textContent = "Classement";
-    subtitle.textContent = "Classement du championnat";
 
-    const response =
-        await fetch("http://localhost:8080/classement");
+    subtitle.textContent =
+        "Classement du championnat";
 
-    const classement =
-        await response.json();
+    try {
 
-    let html = `
-        <div class="table-wrapper">
-            <table class="table">
+        const response = await fetch(
+            "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/classement?select=*",
+            {
+                headers: {
+                    "apikey":
+                        "sb_publishable_qCzHEqb9ulwCVpy_jZ-DQQ_OsGW5lcT",
 
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Club</th>
-                        <th>PTS</th>
-                        <th>V</th>
-                        <th>N</th>
-                        <th>D</th>
-                        <th>BP</th>
-                        <th>BC</th>
-                        <th>Diff</th>
-                    </tr>
-                </thead>
+                    "Authorization":
+                        "Bearer sb_publishable_qCzHEqb9ulwCVpy_jZ-DQQ_OsGW5lcT"
+                }
+            }
+        );
 
-                <tbody>
-    `;
+        const classement =
+            await response.json();
 
-    classement.forEach((club, index) => {
+        let html = `
+            <div class="table-wrapper">
+
+                <table class="table">
+
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Club</th>
+                            <th>PTS</th>
+                            <th>V</th>
+                            <th>N</th>
+                            <th>D</th>
+                            <th>BP</th>
+                            <th>BC</th>
+                            <th>Diff</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+        `;
+
+        classement.forEach((club, index) => {
+
+            const difference =
+                club.buts_pour - club.buts_contre;
+
+            html += `
+                <tr>
+
+                    <td>${index + 1}</td>
+
+                    <td>${club.id_club}</td>
+
+                    <td>${club.points}</td>
+
+                    <td>${club.victoires}</td>
+
+                    <td>${club.nuls}</td>
+
+                    <td>${club.defaites}</td>
+
+                    <td>${club.buts_pour}</td>
+
+                    <td>${club.buts_contre}</td>
+
+                    <td>${difference}</td>
+
+                </tr>
+            `;
+        });
 
         html += `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${club.club}</td>
-                <td>${club.points}</td>
-                <td>${club.victoires}</td>
-                <td>${club.nuls}</td>
-                <td>${club.defaites}</td>
-                <td>${club.butsPour}</td>
-                <td>${club.butsContre}</td>
-                <td>${club.difference}</td>
-            </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
         `;
-    });
 
-    html += `
-                </tbody>
-            </table>
-        </div>
-    `;
+        content.innerHTML = html;
 
-    content.innerHTML = html;
+    } catch (error) {
+
+        console.error(error);
+
+        content.innerHTML = `
+            <div class="card">
+                ❌ Impossible de charger le classement
+            </div>
+        `;
+    }
 }
