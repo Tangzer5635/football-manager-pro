@@ -647,6 +647,7 @@ async function creerClub() {
 }
 
 async function supprimerClub(nom) {
+
     if (!confirm(`Supprimer le club "${nom}" ?`)) {
         return;
     }
@@ -656,12 +657,47 @@ async function supprimerClub(nom) {
     );
 
     if (!club) {
-        alert("Club introuvable.");
+        alert("Club introuvable");
         return;
     }
 
     try {
 
+        // =========================
+        // Supprimer joueurs
+        // =========================
+        await fetch(
+            `${SUPABASE_URL}/joueurs?id_club=eq.${club.id}`,
+            {
+                method: "DELETE",
+
+                headers: {
+                    apikey: SUPABASE_API_KEY,
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                }
+            }
+        );
+
+        // =========================
+        // Supprimer équipes
+        // =========================
+        await fetch(
+            `${SUPABASE_URL}/equipe?id_club=eq.${club.id}`,
+            {
+                method: "DELETE",
+
+                headers: {
+                    apikey: SUPABASE_API_KEY,
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                }
+            }
+        );
+
+        // =========================
+        // Supprimer club
+        // =========================
         const response = await fetch(
             `${SUPABASE_URL}/club?id_club=eq.${club.id}`,
             {
@@ -677,12 +713,13 @@ async function supprimerClub(nom) {
 
         if (!response.ok) {
 
-            const erreur =
-                await response.text();
+            console.log(
+                await response.text()
+            );
 
-            console.error(erreur);
-
-            alert(erreur);
+            alert(
+                "Erreur suppression club."
+            );
 
             return;
         }
@@ -694,7 +731,7 @@ async function supprimerClub(nom) {
         console.error(error);
 
         alert(
-            "Erreur suppression club."
+            "Erreur suppression."
         );
     }
 }
