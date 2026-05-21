@@ -1826,6 +1826,8 @@ async function afficherMatchs(title, subtitle, content) {
 
     const equipes = await equipesResponse.json();
 
+    console.log(equipes);
+
     const equipeToClub = {};
 
     equipes.forEach(equipe => {
