@@ -285,7 +285,7 @@ function afficherEquipes(title, subtitle, content) {
                     <td>${index++}</td>
                     <td>${club.nom}</td>
                     <td>${equipe.niveau}</td>
-                    <td>${equipe.entraineur}</td>
+                    <td>-</td>
                     <td>${equipe.joueurs.length}</td>
                     <td>
                         <button class="action-btn danger-btn"
