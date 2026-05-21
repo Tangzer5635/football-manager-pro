@@ -647,7 +647,6 @@ async function creerClub() {
 }
 
 async function supprimerClub(nom) {
-
     if (!confirm(`Supprimer le club "${nom}" ?`)) {
         return;
     }
@@ -685,6 +684,7 @@ async function supprimerClub(nom) {
 
             alert(erreur);
 
+            console.log(await response.text());
             return;
         }
 
