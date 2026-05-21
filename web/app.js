@@ -1711,7 +1711,8 @@ async function afficherClassement(
     try {
 
         const response = await fetch(
-            "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/vue_classement?select=*&order=points.desc,difference.desc&apikey=" + SUPABASE_API_KEY
+            "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/vue_classement?select=*&order=points.desc,difference.desc&apikey="
+            + SUPABASE_API_KEY
         );
 
         const classement =
@@ -1742,9 +1743,6 @@ async function afficherClassement(
 
         classement.forEach((club, index) => {
 
-                    const difference =
-                        club.buts_pour - club.buts_contre;
-
                     html += `
                 <tr>
         
@@ -1764,7 +1762,7 @@ async function afficherClassement(
         
                     <td>${club.buts_contre}</td>
         
-                    <td>${difference}</td>
+                    <td>${club.difference}</td>
         
                 </tr>
             `;
@@ -1905,8 +1903,6 @@ async function ajouterMatch() {
     if (response.ok) {
 
         alert("✅ Match ajouté !");
-
-        // Recharge directement le classement
         showPage('classement');
 
     } else {
