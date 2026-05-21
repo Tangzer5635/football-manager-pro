@@ -1713,7 +1713,7 @@ async function afficherClassement(
     try {
 
         const response = await fetch(
-            "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/classement?select=*",
+            "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/classement?select=*,club(*)",
             {
                 headers: {
                     "apikey":
@@ -1760,7 +1760,7 @@ async function afficherClassement(
 
                     <td>${index + 1}</td>
 
-                    <td>${club.id_club}</td>
+                    <td>${club.club.nom_club}</td>
 
                     <td>${club.points}</td>
 
