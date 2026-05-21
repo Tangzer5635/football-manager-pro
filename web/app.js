@@ -14,18 +14,92 @@ let data = {clubs: []};
 // ===================================================================
 // CHARGEMENT DES DONNÉES
 // ===================================================================
+const SUPABASE_URL =
+    "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1";
+
+const SUPABASE_API_KEY =
+    "sb_publishable_qCzHEqb9ulwCVpy_jZ-DQQ_OsGW5lcT";
 async function chargerDonnees() {
+
     try {
-        const response = await fetch("http://localhost:8080/data");
 
-        if (!response.ok) {
-            throw new Error("Impossible de charger les données");
-        }
+        const [clubsRes, equipesRes, joueursRes] =
+            await Promise.all([
 
-        data = await response.json();
+                fetch(
+                    `${SUPABASE_URL}/club?select=*`,
+                    {
+                        headers: {
+                            apikey: SUPABASE_API_KEY,
+                            Authorization:
+                                `Bearer ${SUPABASE_API_KEY}`
+                        }
+                    }
+                ),
+
+                fetch(
+                    `${SUPABASE_URL}/equipe?select=*`,
+                    {
+                        headers: {
+                            apikey: SUPABASE_API_KEY,
+                            Authorization:
+                                `Bearer ${SUPABASE_API_KEY}`
+                        }
+                    }
+                ),
+
+                fetch(
+                    `${SUPABASE_URL}/joueurs?select=*`,
+                    {
+                        headers: {
+                            apikey: SUPABASE_API_KEY,
+                            Authorization:
+                                `Bearer ${SUPABASE_API_KEY}`
+                        }
+                    }
+                )
+            ]);
+
+        const clubs = await clubsRes.json();
+        const equipes = await equipesRes.json();
+        const joueurs = await joueursRes.json();
+
+        data = {
+            clubs: clubs.map(club => ({
+
+                id: club.id_club,
+                nom: club.nom_club,
+                dateCreation: club.date_creation,
+
+                equipes: equipes
+                    .filter(
+                        equipe =>
+                            equipe.id_club === club.id_club
+                    )
+                    .map(equipe => ({
+
+                        id: equipe.id_equipe,
+                        nom: equipe.nom_equipe,
+                        niveau: equipe.id_niveau,
+                        joueurs: joueurs.filter(
+                            joueur =>
+                                joueur.id_equipe ===
+                                equipe.id_equipe
+                        )
+                    }))
+            }))
+        };
+
+        console.log(data);
+
     } catch (error) {
-        console.error(error);
-        data = {clubs: []};
+
+        console.error(
+            "Erreur chargement Supabase :",
+            error
+        );
+
+        data = { clubs: [] };
     }
 }
 
