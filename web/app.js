@@ -168,7 +168,7 @@ function afficherDashboard(title, subtitle, content) {
         <div class="card">
             <h3>🏟️ Clubs</h3>
             <p>${nbClubs} club(s)</p>
-            <button class="action-btn" onclick="creerClub()">
+            <button class="action-btn" onclick="ouvrirModalClub()">
                 ➕ Créer un club
             </button>
         </div>
@@ -225,7 +225,7 @@ function afficherClubs(title, subtitle, content) {
 
     content.innerHTML = `
     <div class="page-actions">
-        <button class="action-btn" onclick="creerClub()">
+        <button class="action-btn" onclick="ouvrirModalClub()">
             ➕ Créer un club
         </button>
     </div>
@@ -586,29 +586,25 @@ function filtrerTitulairesParEquipe() {
 // ===================================================================
 async function creerClub() {
 
-    console.log("CREER CLUB");
+    const nom = document
+        .getElementById("club-nom")
+        .value
+        .trim();
 
-    const nom =
-        prompt("Nom du club :");
+    const dateCreation = document
+        .getElementById("club-date")
+        .value;
 
-    console.log("Nom :", nom);
+    if (!nom || !dateCreation) {
 
-    if (!nom) {
-        return;
-    }
+        afficherErreurModal(
+            "Veuillez remplir tous les champs."
+        );
 
-    const dateCreation =
-        prompt("Date de création (YYYY-MM-DD) :");
-
-    console.log("Date :", dateCreation);
-
-    if (!dateCreation) {
         return;
     }
 
     try {
-
-        console.log("AVANT FETCH");
 
         const response = await fetch(
             `${SUPABASE_URL}/club`,
@@ -623,19 +619,35 @@ async function creerClub() {
                 },
 
                 body: JSON.stringify({
+
                     nom_club: nom,
+
                     date_creation: dateCreation
                 })
             }
         );
 
-        console.log("STATUS :", response.status);
+        if (!response.ok) {
 
-        const texte =
-            await response.text();
+            console.log(
+                await response.text()
+            );
 
-        console.log("REPONSE :", texte);
+            afficherErreurModal(
+                "Erreur création club."
+            );
 
+            return;
+        }
+
+        document.getElementById(
+            "club-nom"
+        ).value = "";
+
+        document.getElementById(
+            "club-date"
+        ).value = "";
+        creerClub()
         await chargerDonnees();
 
         showPage("clubs");
@@ -644,7 +656,9 @@ async function creerClub() {
 
         console.error(error);
 
-        alert(error);
+        afficherErreurModal(
+            "Erreur création club."
+        );
     }
 }
 
@@ -738,6 +752,19 @@ async function supprimerClub(nom) {
     }
 }
 
+function ouvrirModalClub() {
+
+    document
+        .getElementById("modal-club")
+        .classList.remove("hidden");
+}
+
+function fermerModalClub() {
+
+    document
+        .getElementById("modal-club")
+        .classList.add("hidden");
+}
 // ===================================================================
 // API - EQUIPES
 // ===================================================================
