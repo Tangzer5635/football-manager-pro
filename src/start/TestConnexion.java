@@ -1,24 +1,31 @@
 package start;
 
+import models.database.DatabaseConnection;
+
 import java.sql.Connection;
-import java.sql.DriverManager;
 
 public class TestConnexion {
+
     public static void main(String[] args) {
-        try {
-            String url =
-                    "jdbc:sqlserver://201201-17;databaseName=FOOTBALL;encrypt=false";
 
-            String user = "football_user";
-            String password = "Football123!";
+        System.setProperty(
+                "java.net.preferIPv4Stack",
+                "true"
+        );
 
-            Connection con = DriverManager.getConnection(url, user, password);
+        System.out.println("Début test...");
 
-            System.out.println("Connexion réussie !");
-            con.close();
+        try (
+                Connection connection =
+                        DatabaseConnection.getConnection()
+        ) {
+
+            System.out.println("Connexion Supabase OK");
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        System.out.println("Fin test");
     }
 }

@@ -6,8 +6,47 @@
       "equipes": [
         {
           "niveau": "L1",
-          "entraineur": "Tanguy Le Buhé",
+          "entraineur": "Le Buhé Tanguy",
           "joueurs": [
+            {
+              "nom": "Bamba",
+              "prenom": "Dieng",
+              "dateNaissance": "1984-04-10",
+              "age": 42,
+              "poste": "ATTAQUANT",
+              "prix": 1.6E7,
+              "titulaire": true
+            },
+            {
+              "nom": "Le Buhé",
+              "prenom": "Tanguy",
+              "dateNaissance": "2004-10-29",
+              "age": 21,
+              "poste": "GARDIEN",
+              "prix": 1600000.0,
+              "titulaire": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nom": "Football Club de Nantes",
+      "dateCreation": "1943-04-21",
+      "equipes": [
+        {
+          "niveau": "L2",
+          "entraineur": "Kantari Ahmed",
+          "joueurs": [
+            {
+              "nom": "Germain",
+              "prenom": "Swan",
+              "dateNaissance": "2001-04-07",
+              "age": 25,
+              "poste": "ATTAQUANT",
+              "prix": 1800000.0,
+              "titulaire": true
+            }
           ]
         }
       ]
