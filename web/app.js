@@ -1814,19 +1814,31 @@ async function afficherMatchs(title, subtitle, content) {
     console.log(matchs);
     console.log(data.clubs);
 
+    const equipesResponse = await fetch(
+        `${SUPABASE_URL}/equipes?select=id_equipe,id_club`,
+        {
+            headers: {
+                apikey: SUPABASE_API_KEY,
+                Authorization: `Bearer ${SUPABASE_API_KEY}`
+            }
+        }
+    );
+
+    const equipes = await equipesResponse.json();
+
     const equipeToClub = {};
-    data.clubs.forEach(club => {
 
-        club.equipes.forEach(equipe => {
+    equipes.forEach(equipe => {
 
-            equipeToClub[equipe.id_equipe || equipe.id] = {
+        const club = data.clubs.find(
+            c => c.id === equipe.id_club
+        );
 
-                nomClub: club.nom_club || club.nom,
-                niveau: equipe.niveau
+        equipeToClub[equipe.id_equipe] = {
 
-            };
+            nomClub: club?.nom || "-"
 
-        });
+        };
 
     });
 
