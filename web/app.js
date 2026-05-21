@@ -1908,8 +1908,10 @@ async function ajouterMatch() {
 
     } else {
 
-        console.error(await response.text());
+        const erreur = await response.text();
 
-        alert("❌ Erreur ajout match");
+        console.error(erreur);
+
+        alert(erreur);
     }
 }
