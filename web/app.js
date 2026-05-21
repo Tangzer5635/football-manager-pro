@@ -1811,9 +1811,6 @@ async function afficherMatchs(title, subtitle, content) {
 
     const matchs = await response.json();
 
-    console.log(matchs);
-    console.log(data.clubs);
-
     const equipesResponse = await fetch(
         `${SUPABASE_URL}/equipe?select=id_equipe,id_club`,
         {
@@ -1825,8 +1822,6 @@ async function afficherMatchs(title, subtitle, content) {
     );
 
     const equipes = await equipesResponse.json();
-
-    console.log(equipes);
 
     const equipeToClub = {};
 
@@ -1939,10 +1934,10 @@ function ouvrirModalMatch() {
         club.equipes.forEach(equipe => {
 
             options += `
-                <option value="${equipe.id_equipe || equipe.id}">
-                    ${club.nom_club || club.nom} - ${equipe.niveau}
-                </option>
-            `;
+            <option value="${equipe.id}">
+                ${club.nom} - ${equipe.niveau}
+            </option>
+        `;
         });
     });
 
