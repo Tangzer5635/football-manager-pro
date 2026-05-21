@@ -1003,7 +1003,7 @@ async function creerNouvelleEquipe() {
 
         const nouvelId =
             Math.floor(
-                Math.random() * 1000000
+                1000 + Math.random() * 900000
             );
 
         // =====================================
