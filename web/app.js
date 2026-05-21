@@ -1757,10 +1757,7 @@ async function afficherClassement(
         classement.forEach((club, index) => {
 
             html += `
-                <tr class="classement-row"
-                    onclick="afficherHistoriqueClub(${club.id}, '${club.nom_club}')"
-                    style="cursor:pointer;"
-                    title="Voir l'historique des matchs">
+                <tr>
                     <td>${index + 1}</td>
                     <td><strong>${club.nom_club}</strong> <small style="color:#888;font-size:11px;">\u2192 historique</small></td>
                     <td>${club.points}</td>
@@ -1797,85 +1794,92 @@ async function afficherClassement(
     }
 }
 
-async function afficherMatchs(
-    title,
-    subtitle,
-    content
-) {
+async function afficherMatchs(title, subtitle, content) {
 
     title.textContent = "Matchs";
-    subtitle.textContent = "Ajouter un r\u00e9sultat";
+    subtitle.textContent = "Gestion des matchs";
 
-    // Construire la liste des \u00e9quipes depuis data (d\u00e9j\u00e0 charg\u00e9)
-    // Format : { id, nom, niveau, id_niveau, nomClub }
-    const equipes = [];
+    await chargerDonnees();
+
+    const response = await fetch(
+        `${SUPABASE_URL}/matchs?select=*&order=date_match.desc`,
+        {
+            headers: {
+                apikey: SUPABASE_API_KEY,
+                Authorization: `Bearer ${SUPABASE_API_KEY}`
+            }
+        }
+    );
+
+    const matchs = await response.json();
+
+    const equipeToClub = {};
+
     data.clubs.forEach(club => {
         club.equipes.forEach(equipe => {
-            equipes.push({
-                id: equipe.id,
-                nom: equipe.nom,
-                niveau: equipe.niveau,
-                id_niveau: equipe.id_niveau,
-                nomClub: club.nom
-            });
+            equipeToClub[equipe.id] = {
+                nom: club.nom,
+                niveau: equipe.niveau
+            };
         });
     });
 
-    const niveaux = [
-        { id: 1, label: "Ligue 1" },
-        { id: 2, label: "Ligue 2" },
-        { id: 3, label: "Ligue 3" },
-        { id: 4, label: "National" },
-        { id: 5, label: "National 2" },
-        { id: 6, label: "National 3" }
-    ];
+    let html = `
+        <button class="create-btn" onclick="ouvrirModalMatch()">
+            ➕ Créer un match
+        </button>
 
-    let niveauOptions = niveaux.map(n =>
-        `<option value="${n.id}">${n.label}</option>`
-    ).join("");
-
-    content.innerHTML = `
-        <div class="card">
-
-            <div class="form-group">
-                <label>Niveau de la rencontre</label>
-                <select id="niveau-match" onchange="filtrerEquipesParNiveau()">
-                    ${niveauOptions}
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Domicile</label>
-                <select id="domicile"></select>
-            </div>
-
-            <div class="form-group">
-                <label>Ext\u00e9rieur</label>
-                <select id="exterieur"></select>
-            </div>
-
-            <div class="form-group">
-                <label>Score domicile</label>
-                <input type="number" id="scoreDom" min="0" value="0">
-            </div>
-
-            <div class="form-group">
-                <label>Score ext\u00e9rieur</label>
-                <input type="number" id="scoreExt" min="0" value="0">
-            </div>
-
-            <div id="match-erreur" style="color:red;margin-bottom:8px;display:none;"></div>
-
-            <button class="action-btn" onclick="ajouterMatch()">
-                \u2795 Ajouter le match
-            </button>
-
-        </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Domicile</th>
+                    <th>Score</th>
+                    <th>Extérieur</th>
+                </tr>
+            </thead>
+            <tbody>
     `;
 
-    // Stocker les \u00e9quipes pour usage dans filtrerEquipesParNiveau
-    window._equipesMatchs = equipes;
-    filtrerEquipesParNiveau();
+    if (matchs.length === 0) {
+
+        html += `
+            <tr>
+                <td colspan="4" style="text-align:center;color:#888;">
+                    Aucun match enregistré
+                </td>
+            </tr>
+        `;
+
+    } else {
+
+        matchs.forEach(match => {
+
+            const dom = equipeToClub[match.equipe_domicile];
+            const ext = equipeToClub[match.equipe_exterieur];
+
+            const date = new Date(match.date_match)
+                .toLocaleDateString("fr-FR");
+
+            html += `
+                <tr>
+                    <td>${date}</td>
+                    <td>${dom?.nom || "?"}</td>
+                    <td style="font-weight:bold;text-align:center;">
+                        ${match.score_domicile} - ${match.score_exterieur}
+                    </td>
+                    <td>${ext?.nom || "?"}</td>
+                </tr>
+            `;
+        });
+    }
+
+    html += `
+            </tbody>
+        </table>
+    `;
+
+    content.innerHTML = html;
 }
 
 function filtrerEquipesParNiveau() {
@@ -1905,6 +1909,118 @@ function afficherErreurMatch(msg) {
         el.textContent = msg;
         el.style.display = "block";
     }
+}
+
+function ouvrirModalMatch() {
+
+    let options = "";
+
+    data.clubs.forEach(club => {
+        club.equipes.forEach(equipe => {
+
+            options += `
+                <option value="${equipe.id}">
+                    ${club.nom} - ${equipe.niveau}
+                </option>
+            `;
+        });
+    });
+
+    const modal = document.createElement("div");
+
+    modal.className = "modal";
+
+    modal.innerHTML = `
+        <div class="modal-overlay"></div>
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h2>⚽ Créer un match</h2>
+                <button class="modal-close">✕</button>
+            </div>
+
+            <form id="form-match">
+
+                <div class="form-group">
+                    <label>Équipe domicile</label>
+                    <select id="domicile" required>
+                        ${options}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Équipe extérieur</label>
+                    <select id="exterieur" required>
+                        ${options}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Score domicile</label>
+                    <input type="number" id="scoreDom" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Score extérieur</label>
+                    <input type="number" id="scoreExt" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="dateMatch" required>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="action-btn">
+                        Enregistrer
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.querySelectorAll(".modal-close, .modal-overlay")
+        .forEach(el => {
+            el.addEventListener("click", () => modal.remove());
+        });
+
+    document.getElementById("form-match")
+        .addEventListener("submit", async (e) => {
+
+            e.preventDefault();
+
+            const body = {
+                equipe_domicile: parseInt(document.getElementById("domicile").value),
+                equipe_exterieur: parseInt(document.getElementById("exterieur").value),
+                score_domicile: parseInt(document.getElementById("scoreDom").value),
+                score_exterieur: parseInt(document.getElementById("scoreExt").value),
+                date_match: document.getElementById("dateMatch").value
+            };
+
+            await fetch(`${SUPABASE_URL}/matchs`, {
+                method: "POST",
+                headers: {
+                    apikey: SUPABASE_API_KEY,
+                    Authorization: `Bearer ${SUPABASE_API_KEY}`,
+                    "Content-Type": "application/json",
+                    Prefer: "return=minimal"
+                },
+                body: JSON.stringify(body)
+            });
+
+            modal.remove();
+
+            afficherMatchs(
+                document.getElementById("page-title"),
+                document.getElementById("page-subtitle"),
+                document.getElementById("content")
+            );
+        });
 }
 
 async function ajouterMatch() {
