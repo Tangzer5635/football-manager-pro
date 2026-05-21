@@ -12,7 +12,7 @@ public class Club {
     private LocalDate dateCreation;
     private String nom;
 
-    Club(String nom, LocalDate dateCreation) {
+    public Club(String nom, LocalDate dateCreation) {
         setNom(nom);
         setDateCreation(dateCreation);
     }

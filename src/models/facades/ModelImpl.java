@@ -3,6 +3,8 @@ package models.facades;
 import models.entities.Human.Entraineur;
 import models.entities.Human.FactoryHuman;
 import models.entities.Human.Joueur;
+import models.entities.Manage.Championnat;
+import models.entities.Manage.Classement;
 import models.entities.Manage.Club;
 import models.entities.Manage.Equipe;
 import models.entities.Manage.FactoryManage;
@@ -33,6 +35,7 @@ public class ModelImpl implements IModel {
                     "integratedSecurity=true;";
 
     private static final List<Club> CLUBS = new ArrayList<>();
+    private static final List<Championnat> CHAMPIONNATS = new ArrayList<>();
 
     // ======================================================
     // CONSTRUCTEUR
@@ -78,6 +81,13 @@ public class ModelImpl implements IModel {
         club.ajouterEquipe(equipe);
 
         ajouterClub(club);
+
+        Championnat ligue1 = new Championnat(
+                "Ligue 1",
+                "2025-2026"
+        );
+
+        ligue1.ajouterClub(club);
     }
 
     // ======================================================
@@ -776,5 +786,227 @@ public class ModelImpl implements IModel {
         }
 
         return joueurs;
+    }
+
+    public void ajouterChampionnat(Championnat championnat) {
+
+        String sql = """
+    INSERT INTO championnat (
+        nom,
+        saison
+    )
+    VALUES (?, ?)
+    """;
+
+        try (
+                Connection connection = getConnection();
+                PreparedStatement statement =
+                        connection.prepareStatement(sql)
+        ) {
+
+            statement.setString(
+                    1,
+                    championnat.getNom()
+            );
+
+            statement.setString(
+                    2,
+                    championnat.getSaison()
+            );
+
+            statement.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            throw new RuntimeException(
+                    "Erreur lors de l'ajout du championnat."
+            );
+        }
+    }
+
+    public void ajouterClubClassement(
+            Championnat championnat,
+            Club club
+    ) {
+
+        String sqlChampionnat = """
+    SELECT id_championnat
+    FROM championnat
+    WHERE nom = ?
+      AND saison = ?
+    """;
+
+        String sqlClub = """
+    SELECT id_club
+    FROM club
+    WHERE nom_club = ?
+    """;
+
+        String sqlInsert = """
+    INSERT INTO classement (
+        id_championnat,
+        id_club,
+        points,
+        victoires,
+        nuls,
+        defaites,
+        buts_pour,
+        buts_contre
+    )
+    VALUES (?, ?, 0, 0, 0, 0, 0, 0)
+    """;
+
+        try (
+                Connection connection = getConnection()
+        ) {
+
+            int idChampionnat = -1;
+            int idClub = -1;
+
+            // récupérer id championnat
+            try (
+                    PreparedStatement statement =
+                            connection.prepareStatement(sqlChampionnat)
+            ) {
+
+                statement.setString(
+                        1,
+                        championnat.getNom()
+                );
+
+                statement.setString(
+                        2,
+                        championnat.getSaison()
+                );
+
+                ResultSet rs = statement.executeQuery();
+
+                if (rs.next()) {
+                    idChampionnat =
+                            rs.getInt("id_championnat");
+                }
+            }
+
+            // récupérer id club
+            try (
+                    PreparedStatement statement =
+                            connection.prepareStatement(sqlClub)
+            ) {
+
+                statement.setString(
+                        1,
+                        club.getNom()
+                );
+
+                ResultSet rs = statement.executeQuery();
+
+                if (rs.next()) {
+                    idClub = rs.getInt("id_club");
+                }
+            }
+
+            // insert classement
+            try (
+                    PreparedStatement statement =
+                            connection.prepareStatement(sqlInsert)
+            ) {
+
+                statement.setInt(1, idChampionnat);
+                statement.setInt(2, idClub);
+
+                statement.executeUpdate();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            throw new RuntimeException(
+                    "Erreur ajout club classement."
+            );
+        }
+    }
+
+    public List<Classement> recupererClassement() {
+
+        List<Classement> classements =
+                new ArrayList<>();
+
+        String sql = """
+    SELECT
+        C.nom_club,
+        C.date_creation,
+
+        CL.points,
+        CL.victoires,
+        CL.nuls,
+        CL.defaites,
+        CL.buts_pour,
+        CL.buts_contre
+
+    FROM classement CL
+
+    INNER JOIN club C
+        ON C.id_club = CL.id_club
+
+    ORDER BY
+        CL.points DESC,
+        (CL.buts_pour - CL.buts_contre) DESC,
+        CL.buts_pour DESC
+    """;
+
+        try (
+                Connection connection = getConnection();
+                PreparedStatement statement =
+                        connection.prepareStatement(sql);
+                ResultSet rs = statement.executeQuery()
+        ) {
+
+            while (rs.next()) {
+
+                Club club =
+                        FactoryManage.createClub(
+                                rs.getString("nom_club"),
+                                rs.getDate("date_creation")
+                                        .toLocalDate()
+                        );
+
+                Classement classement = new Classement(club);
+
+                // IMPORTANT :
+                // ajoute setters dans Classement.java
+
+                classement.setPoints(
+                        rs.getInt("points")
+                );
+
+                classement.setVictoires(
+                        rs.getInt("victoires")
+                );
+
+                classement.setNuls(
+                        rs.getInt("nuls")
+                );
+
+                classement.setDefaites(
+                        rs.getInt("defaites")
+                );
+
+                classement.setButsPour(
+                        rs.getInt("buts_pour")
+                );
+
+                classement.setButsContre(
+                        rs.getInt("buts_contre")
+                );
+
+                classements.add(classement);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return classements;
     }
 }

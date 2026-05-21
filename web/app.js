@@ -1,14 +1,3 @@
-// ===================================================================
-// app.js - Version complète avec API Java
-// Fonctionnalités :
-// - Affichage dashboard
-// - Liste des clubs, équipes, joueurs, titulaires
-// - Création de clubs
-// - Création d'équipes
-// - Ajout de joueurs
-// - Suppression de clubs, équipes et joueurs
-// ===================================================================
-
 let data = {clubs: []};
 
 // ===================================================================
@@ -283,6 +272,13 @@ function showPage(page) {
             break;
         case "titulaires":
             afficherTitulaires(title, subtitle, content);
+            break;
+        case 'classement':
+            afficherClassement(
+                title,
+                subtitle,
+                content
+            );
             break;
     }
 }
@@ -1031,32 +1027,6 @@ async function supprimerEquipe(idEquipe) {
     }
 }
 
-function remplirSelectClubsEquipe() {
-
-    const select =
-        document.getElementById(
-            "equipe-club"
-        );
-
-    if (!select) {
-        return;
-    }
-
-    select.innerHTML = "";
-
-    data.clubs.forEach(club => {
-
-        const option =
-            document.createElement("option");
-
-        option.value = club.nom;
-
-        option.textContent = club.nom;
-
-        select.appendChild(option);
-    });
-}
-
 async function creerNouvelleEquipe() {
 
     const clubId =
@@ -1097,7 +1067,6 @@ async function creerNouvelleEquipe() {
                 1000 +
                 Math.random() * 900000
             );
-
 // Création personne
         await fetch(
             `${SUPABASE_URL}/personne`,
@@ -1322,47 +1291,6 @@ async function supprimerJoueur(idJoueur) {
             "Erreur suppression joueur."
         );
     }
-}
-
-// ===================================================================
-// OUTILS HTTP
-// ===================================================================
-async function postForm(url, params) {
-    const response = await fetch(url, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: toForm(params)
-    });
-
-    const result = await response.json();
-
-    if (!response.ok || result.success === false) {
-        throw new Error(result.error || result.message || "Erreur API");
-    }
-}
-
-async function deleteForm(url, params) {
-    const response = await fetch(url, {
-        method: "DELETE",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: toForm(params)
-    });
-
-    const result = await response.json();
-
-    if (!response.ok || result.success === false) {
-        throw new Error(result.error || result.message || "Erreur API");
-    }
-}
-
-function toForm(params) {
-    return Object.entries(params)
-        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
-        .join("&");
 }
 
 async function rafraichir(page) {
@@ -1742,37 +1670,6 @@ function calculerAge(dateNaissance) {
     return age;
 }
 
-function formatPrixInput(valeur) {
-    const prix = Number(valeur);
-
-    if (!prix || prix <= 0) {
-        return "";
-    }
-
-    if (prix >= 1_000_000_000) {
-        const md = prix / 1_000_000_000;
-        return Number.isInteger(md)
-            ? `${md} Md€`
-            : `${md.toFixed(1)} Md€`;
-    }
-
-    if (prix >= 1_000_000) {
-        const m = prix / 1_000_000;
-        return Number.isInteger(m)
-            ? `${m}M€`
-            : `${m.toFixed(1)}M€`;
-    }
-
-    if (prix >= 1_000) {
-        const k = prix / 1_000;
-        return Number.isInteger(k)
-            ? `${k}k€`
-            : `${k.toFixed(1)}k€`;
-    }
-
-    return `${prix}€`;
-}
-
 function filtrerJoueurs() {
     const recherche = document
         .getElementById("recherche-joueur")
@@ -1800,4 +1697,62 @@ function filtrerJoueurs() {
             card.style.display = "none";
         }
     });
+}
+
+async function afficherClassement(title, subtitle, content) {
+
+    title.textContent = "Classement";
+    subtitle.textContent = "Classement du championnat";
+
+    const response =
+        await fetch("http://localhost:8080/classement");
+
+    const classement =
+        await response.json();
+
+    let html = `
+        <div class="table-wrapper">
+            <table class="table">
+
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Club</th>
+                        <th>PTS</th>
+                        <th>V</th>
+                        <th>N</th>
+                        <th>D</th>
+                        <th>BP</th>
+                        <th>BC</th>
+                        <th>Diff</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+    `;
+
+    classement.forEach((club, index) => {
+
+        html += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${club.club}</td>
+                <td>${club.points}</td>
+                <td>${club.victoires}</td>
+                <td>${club.nuls}</td>
+                <td>${club.defaites}</td>
+                <td>${club.butsPour}</td>
+                <td>${club.butsContre}</td>
+                <td>${club.difference}</td>
+            </tr>
+        `;
+    });
+
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    content.innerHTML = html;
 }
