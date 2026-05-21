@@ -647,27 +647,56 @@ async function creerClub() {
 }
 
 async function supprimerClub(nom) {
+
     if (!confirm(`Supprimer le club "${nom}" ?`)) {
         return;
     }
 
+    const club = data.clubs.find(
+        c => c.nom === nom
+    );
+
+    if (!club) {
+        alert("Club introuvable.");
+        return;
+    }
+
     try {
-        const response = await fetch("http://localhost:8080/clubs", {
-            method: "DELETE",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
-            body: toForm({ nom })
-        });
+
+        const response = await fetch(
+            `${SUPABASE_URL}/club?id_club=eq.${club.id}`,
+            {
+                method: "DELETE",
+
+                headers: {
+                    apikey: SUPABASE_API_KEY,
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                }
+            }
+        );
 
         if (!response.ok) {
-            throw new Error("Erreur lors de la suppression du club.");
+
+            const erreur =
+                await response.text();
+
+            console.error(erreur);
+
+            alert(erreur);
+
+            return;
         }
 
         await rafraichir("clubs");
+
     } catch (error) {
+
         console.error(error);
-        alert(error.message);
+
+        alert(
+            "Erreur suppression club."
+        );
     }
 }
 
@@ -731,15 +760,37 @@ async function creerEquipe() {
     }
 }
 
-async function supprimerEquipe(clubNom, niveau) {
-    if (!confirm(`Supprimer l'équipe ${niveau} ?`)) return;
+async function supprimerEquipe(idEquipe) {
 
-    await deleteForm("http://localhost:8080/equipes", {
-        clubNom,
-        niveau
-    });
+    if (!confirm("Supprimer cette équipe ?")) {
+        return;
+    }
 
-    await rafraichir("equipes");
+    try {
+
+        await fetch(
+            `${SUPABASE_URL}/equipe?id_equipe=eq.${idEquipe}`,
+            {
+                method: "DELETE",
+
+                headers: {
+                    apikey: SUPABASE_API_KEY,
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                }
+            }
+        );
+
+        await rafraichir("equipes");
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            "Erreur suppression équipe."
+        );
+    }
 }
 
 // ===================================================================
