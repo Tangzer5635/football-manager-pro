@@ -1802,7 +1802,7 @@ async function afficherMatchs(title, subtitle, content) {
     await chargerDonnees();
 
     const response = await fetch(
-        `${SUPABASE_URL}/matchs?select=*&order=date_match.desc`,
+        `${SUPABASE_URL}/matchs?select=*&order=id_match.desc`,
         {
             headers: {
                 apikey: SUPABASE_API_KEY,
@@ -1817,69 +1817,68 @@ async function afficherMatchs(title, subtitle, content) {
 
     data.clubs.forEach(club => {
         club.equipes.forEach(equipe => {
+
             equipeToClub[equipe.id] = {
-                nom: club.nom,
+                nomClub: club.nom,
                 niveau: equipe.niveau
             };
+
         });
     });
 
-    let html = `
-        <button class="create-btn" onclick="ouvrirModalMatch()">
-            ➕ Créer un match
-        </button>
+    let rows = "";
+
+    matchs.forEach(match => {
+
+        const domicile =
+            equipeToClub[match.equipe_domicile];
+
+        const exterieur =
+            equipeToClub[match.equipe_exterieur];
+
+        rows += `
+            <tr>
+                <td>${domicile?.nomClub || "-"}</td>
+
+                <td style="font-weight:bold;text-align:center;">
+                    ${match.score_domicile}
+                    -
+                    ${match.score_exterieur}
+                </td>
+
+                <td>${exterieur?.nomClub || "-"}</td>
+            </tr>
+        `;
+    });
+
+    content.innerHTML = `
+        <div class="page-actions">
+
+            <button class="action-btn"
+                    onclick="ouvrirModalMatch()">
+
+                ➕ Créer un match
+
+            </button>
+
+        </div>
 
         <table class="table">
+
             <thead>
                 <tr>
-                    <th>Date</th>
                     <th>Domicile</th>
                     <th>Score</th>
                     <th>Extérieur</th>
                 </tr>
             </thead>
+
             <tbody>
-    `;
-
-    if (matchs.length === 0) {
-
-        html += `
-            <tr>
-                <td colspan="4" style="text-align:center;color:#888;">
-                    Aucun match enregistré
-                </td>
-            </tr>
-        `;
-
-    } else {
-
-        matchs.forEach(match => {
-
-            const dom = equipeToClub[match.equipe_domicile];
-            const ext = equipeToClub[match.equipe_exterieur];
-
-            const date = new Date(match.date_match)
-                .toLocaleDateString("fr-FR");
-
-            html += `
-                <tr>
-                    <td>${date}</td>
-                    <td>${dom?.nom || "?"}</td>
-                    <td style="font-weight:bold;text-align:center;">
-                        ${match.score_domicile} - ${match.score_exterieur}
-                    </td>
-                    <td>${ext?.nom || "?"}</td>
-                </tr>
-            `;
-        });
-    }
-
-    html += `
+                ${rows}
             </tbody>
+
         </table>
     `;
-
-    content.innerHTML = html;
 }
 
 function filtrerEquipesParNiveau() {
@@ -1913,18 +1912,25 @@ function afficherErreurMatch(msg) {
 
 function ouvrirModalMatch() {
 
-    let options = "";
+    const equipes = [];
 
     data.clubs.forEach(club => {
         club.equipes.forEach(equipe => {
 
-            options += `
-                <option value="${equipe.id}">
-                    ${club.nom} - ${equipe.niveau}
-                </option>
-            `;
+            equipes.push({
+                id: equipe.id,
+                nom: club.nom,
+                niveau: equipe.niveau
+            });
+
         });
     });
+
+    const options = equipes.map(e => `
+        <option value="${e.id}">
+            ${e.nom} - ${e.niveau}
+        </option>
+    `).join("");
 
     const modal = document.createElement("div");
 
@@ -1937,271 +1943,67 @@ function ouvrirModalMatch() {
 
             <div class="modal-header">
                 <h2>⚽ Créer un match</h2>
-                <button class="modal-close">✕</button>
+
+                <button class="modal-close">
+                    ✕
+                </button>
             </div>
 
-            <form onsubmit="event.preventDefault(); ajouterMatch();">
-                <div class="form-group">
-                    <label>Équipe domicile</label>
-                    <select id="domicile" required>
-                        ${options}
-                    </select>
-                </div>
+            <div class="form-group">
+                <label>Domicile</label>
 
-                <div class="form-group">
-                    <label>Équipe extérieur</label>
-                    <select id="exterieur" required>
-                        ${options}
-                    </select>
-                </div>
+                <select id="domicile">
+                    ${options}
+                </select>
+            </div>
 
-                <div class="form-group">
-                    <label>Score domicile</label>
-                    <input type="number" id="scoreDom" min="0" required>
-                </div>
+            <div class="form-group">
+                <label>Extérieur</label>
 
-                <div class="form-group">
-                    <label>Score extérieur</label>
-                    <input type="number" id="scoreExt" min="0" required>
-                </div>
+                <select id="exterieur">
+                    ${options}
+                </select>
+            </div>
 
-                <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" id="dateMatch" required>
-                </div>
+            <div class="form-group">
+                <label>Score domicile</label>
 
-                <div class="modal-footer">
-                    <button type="submit" class="action-btn">
-                        Enregistrer
-                    </button>
-                </div>
+                <input type="number"
+                       id="scoreDom"
+                       value="0">
+            </div>
 
-            </form>
+            <div class="form-group">
+                <label>Score extérieur</label>
+
+                <input type="number"
+                       id="scoreExt"
+                       value="0">
+            </div>
+
+            <div id="match-erreur"
+                 style="color:red;margin-bottom:10px;display:none;">
+            </div>
+
+            <button class="action-btn"
+                    onclick="ajouterMatch()">
+
+                ✅ Ajouter
+
+            </button>
 
         </div>
     `;
 
     document.body.appendChild(modal);
 
-    modal.querySelectorAll(".modal-close, .modal-overlay")
-        .forEach(el => {
-            el.addEventListener("click", () => modal.remove());
-        });
+    modal.querySelectorAll(
+        ".modal-close, .modal-overlay"
+    ).forEach(el => {
 
-    document.getElementById("form-match")
-        .addEventListener("submit", async (e) => {
-
-            e.preventDefault();
-
-            const body = {
-                equipe_domicile: parseInt(document.getElementById("domicile").value),
-                equipe_exterieur: parseInt(document.getElementById("exterieur").value),
-                score_domicile: parseInt(document.getElementById("scoreDom").value),
-                score_exterieur: parseInt(document.getElementById("scoreExt").value),
-                date_match: document.getElementById("dateMatch").value
-            };
-
-            await fetch(`${SUPABASE_URL}/matchs`, {
-                method: "POST",
-                headers: {
-                    apikey: SUPABASE_API_KEY,
-                    Authorization: `Bearer ${SUPABASE_API_KEY}`,
-                    "Content-Type": "application/json",
-                    Prefer: "return=minimal"
-                },
-                body: JSON.stringify(body)
-            });
-
-            if (response.ok) {
-
-                document.querySelector(".modal")?.remove();
-
-                await chargerDonnees();
-
-                showPage('matchs');
-
-            } else {
-
+        el.addEventListener("click", () => {
             modal.remove();
-
-            afficherMatchs(
-                document.getElementById("page-title"),
-                document.getElementById("page-subtitle"),
-                document.getElementById("content")
-            );
         });
-}
 
-async function ajouterMatch() {
-
-    const equipe_domicile = document.getElementById("domicile").value;
-    const equipe_exterieur = document.getElementById("exterieur").value;
-
-    if (!equipe_domicile || !equipe_exterieur) {
-        afficherErreurMatch("❌ Aucune équipe disponible pour ce niveau.");
-        return;
-    }
-
-    if (equipe_domicile === equipe_exterieur) {
-        afficherErreurMatch("❌ Les deux équipes doivent être différentes.");
-        return;
-    }
-
-    const score_domicile = parseInt(document.getElementById("scoreDom").value, 10);
-    const score_exterieur = parseInt(document.getElementById("scoreExt").value, 10);
-
-    if (isNaN(score_domicile) || isNaN(score_exterieur)) {
-        afficherErreurMatch("❌ Veuillez saisir des scores valides.");
-        return;
-    }
-
-    const response = await fetch(
-        "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/matchs",
-        {
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json",
-
-                "apikey":
-                SUPABASE_API_KEY,
-
-                "Authorization":
-                    `Bearer ${SUPABASE_API_KEY}`
-            },
-
-            body: JSON.stringify({
-                equipe_domicile,
-                equipe_exterieur,
-                score_domicile,
-                score_exterieur
-            })
-        }
-    );
-
-    if (response.ok) {
-
-        showPage('classement');
-
-    } else {
-
-        const erreur = await response.json();
-        const msg = erreur?.message || JSON.stringify(erreur);
-        afficherErreurMatch("❌ " + msg);
-    }
-}
-async function afficherHistoriqueClub(idClub, nomClub) {
-
-    await chargerDonnees();
-
-    const club = data.clubs.find(c => String(c.id) === String(idClub));
-
-    if (!club || club.equipes.length === 0) {
-        alert("Aucune équipe trouvée pour ce club.");
-        return;
-    }
-
-    const idEquipes = club.equipes.map(e => e.id);
-
-    // Récupérer tous les matchs où le club est impliqué (dom ou ext)
-    const promises = idEquipes.flatMap(id => [
-        fetch(`${SUPABASE_URL}/matchs?equipe_domicile=eq.${id}&select=*&order=date_match.desc`, {
-            headers: { apikey: SUPABASE_API_KEY, Authorization: `Bearer ${SUPABASE_API_KEY}` }
-        }),
-        fetch(`${SUPABASE_URL}/matchs?equipe_exterieur=eq.${id}&select=*&order=date_match.desc`, {
-            headers: { apikey: SUPABASE_API_KEY, Authorization: `Bearer ${SUPABASE_API_KEY}` }
-        })
-    ]);
-
-    const responses = await Promise.all(promises);
-    const jsons = await Promise.all(responses.map(r => r.json()));
-
-    // Fusionner et dédupliquer par id_match, trier par date desc
-    const matchsMap = new Map();
-    jsons.flat().forEach(m => matchsMap.set(m.id_match, m));
-    const matchs = Array.from(matchsMap.values()).sort((a, b) =>
-        new Date(b.date_match) - new Date(a.date_match)
-    );
-
-    // Map id_equipe -> nom club depuis data
-    const equipeToClub = {};
-    data.clubs.forEach(c => {
-        c.equipes.forEach(e => {
-            equipeToClub[e.id] = c.nom;
-        });
     });
-
-    let lignes = "";
-
-    if (matchs.length === 0) {
-        lignes = `<tr><td colspan="5" style="text-align:center;color:#888;">Aucun match enregistré.</td></tr>`;
-    } else {
-        matchs.forEach(m => {
-            const domNom = equipeToClub[m.equipe_domicile] || `Équipe ${m.equipe_domicile}`;
-            const extNom = equipeToClub[m.equipe_exterieur] || `Équipe ${m.equipe_exterieur}`;
-            const date = m.date_match ? new Date(m.date_match).toLocaleDateString("fr-FR") : "-";
-            const sd = m.score_domicile;
-            const se = m.score_exterieur;
-            const estDom = idEquipes.includes(m.equipe_domicile);
-
-            let resultat, couleur;
-            if (sd === se) {
-                resultat = "N"; couleur = "#f59e0b";
-            } else if ((sd > se && estDom) || (se > sd && !estDom)) {
-                resultat = "V"; couleur = "#10b981";
-            } else {
-                resultat = "D"; couleur = "#ef4444";
-            }
-
-            lignes += `
-                <tr>
-                    <td style="color:#888;font-size:13px;">${date}</td>
-                    <td>${domNom}</td>
-                    <td style="font-weight:bold;text-align:center;">${sd} - ${se}</td>
-                    <td>${extNom}</td>
-                    <td style="text-align:center;">
-                        <span style="background:${couleur};color:white;border-radius:4px;padding:2px 8px;font-weight:bold;font-size:13px;">
-                            ${resultat}
-                        </span>
-                    </td>
-                </tr>
-            `;
-        });
-    }
-
-    const modal = document.createElement("div");
-    modal.className = "modal";
-    modal.innerHTML = `
-        <div class="modal-overlay"></div>
-        <div class="modal-content" style="max-width:640px;width:90%;">
-            <div class="modal-header">
-                <h2>📅 Historique — ${nomClub}</h2>
-                <button class="modal-close">✕</button>
-            </div>
-            <div class="modal-body" style="overflow-x:auto;">
-                <p style="color:#888;margin-bottom:12px;">${matchs.length} match(s) joué(s)</p>
-                <table class="table" style="width:100%;">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Domicile</th>
-                            <th style="text-align:center;">Score</th>
-                            <th>Extérieur</th>
-                            <th style="text-align:center;">Résultat</th>
-                        </tr>
-                    </thead>
-                    <tbody>${lignes}</tbody>
-                </table>
-            </div>
-            <div class="modal-footer">
-                <button class="action-btn secondary-btn">Fermer</button>
-            </div>
-        </div>
-    `;
-
-    modal.querySelectorAll(".modal-close, .secondary-btn, .modal-overlay").forEach(btn => {
-        btn.addEventListener("click", () => modal.remove());
-    });
-
-    document.body.appendChild(modal);
 }
