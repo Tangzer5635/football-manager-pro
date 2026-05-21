@@ -1721,8 +1721,6 @@ async function afficherClassement(
         const classement =
             await response.json();
 
-        console.log("Reponse classement :", classement);
-
         // Supabase peut retourner un objet d'erreur au lieu d'un tableau
         if (!response.ok || !Array.isArray(classement)) {
             const msg = classement?.message || classement?.hint || JSON.stringify(classement);
@@ -1818,94 +1816,129 @@ async function afficherMatchs(
 ) {
 
     title.textContent = "Matchs";
+    subtitle.textContent = "Ajouter un r\u00e9sultat";
 
-    subtitle.textContent =
-        "Ajouter un résultat";
-
-    // récupérer clubs
-    const clubsResponse = await fetch(
-        "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/club?select=*"
-        + "&apikey=sb_publishable_qCzHEqb9ulwCVpy_jZ-DQQ_OsGW5lcT"
-    );
-
-    const clubs = await clubsResponse.json();
-
-    let options = "";
-
-    clubs.forEach(club => {
-
-        options += `
-            <option value="${club.id_club}">
-                ${club.nom_club}
-            </option>
-        `;
+    // Construire la liste des \u00e9quipes depuis data (d\u00e9j\u00e0 charg\u00e9)
+    // Format : { id, nom, niveau, id_niveau, nomClub }
+    const equipes = [];
+    data.clubs.forEach(club => {
+        club.equipes.forEach(equipe => {
+            equipes.push({
+                id: equipe.id,
+                nom: equipe.nom,
+                niveau: equipe.niveau,
+                id_niveau: equipe.id_niveau,
+                nomClub: club.nom
+            });
+        });
     });
+
+    const niveaux = [
+        { id: 1, label: "Ligue 1" },
+        { id: 2, label: "Ligue 2" },
+        { id: 3, label: "Ligue 3" },
+        { id: 4, label: "National" },
+        { id: 5, label: "National 2" },
+        { id: 6, label: "National 3" }
+    ];
+
+    let niveauOptions = niveaux.map(n =>
+        `<option value="${n.id}">${n.label}</option>`
+    ).join("");
 
     content.innerHTML = `
         <div class="card">
 
             <div class="form-group">
-                <label>Domicile</label>
-
-                <select id="domicile">
-                    ${options}
+                <label>Niveau de la rencontre</label>
+                <select id="niveau-match" onchange="filtrerEquipesParNiveau()">
+                    ${niveauOptions}
                 </select>
             </div>
 
             <div class="form-group">
-                <label>Extérieur</label>
+                <label>Domicile</label>
+                <select id="domicile"></select>
+            </div>
 
-                <select id="exterieur">
-                    ${options}
-                </select>
+            <div class="form-group">
+                <label>Ext\u00e9rieur</label>
+                <select id="exterieur"></select>
             </div>
 
             <div class="form-group">
                 <label>Score domicile</label>
-
-                <input type="number" id="scoreDom">
+                <input type="number" id="scoreDom" min="0" value="0">
             </div>
 
             <div class="form-group">
-                <label>Score extérieur</label>
-
-                <input type="number" id="scoreExt">
+                <label>Score ext\u00e9rieur</label>
+                <input type="number" id="scoreExt" min="0" value="0">
             </div>
 
-            <button class="action-btn"
-                    onclick="ajouterMatch()">
+            <div id="match-erreur" style="color:red;margin-bottom:8px;display:none;"></div>
 
-                ➕ Ajouter le match
-
+            <button class="action-btn" onclick="ajouterMatch()">
+                \u2795 Ajouter le match
             </button>
 
         </div>
     `;
+
+    // Stocker les \u00e9quipes pour usage dans filtrerEquipesParNiveau
+    window._equipesMatchs = equipes;
+    filtrerEquipesParNiveau();
+}
+
+function filtrerEquipesParNiveau() {
+    const idNiveau = parseInt(document.getElementById("niveau-match").value, 10);
+    const equipes = (window._equipesMatchs || []).filter(e => {
+        // id_niveau peut \u00eatre absent, on se base sur le label
+        const niveauMap = {
+            1: "Ligue 1", 2: "Ligue 2", 3: "Ligue 3",
+            4: "National", 5: "National 2", 6: "National 3"
+        };
+        return e.niveau === niveauMap[idNiveau];
+    });
+
+    const makeOptions = equipes.map(e =>
+        `<option value="${e.id}">${e.nomClub} \u2014 ${e.niveau}</option>`
+    ).join("");
+
+    const empty = `<option value="">Aucune \u00e9quipe \u00e0 ce niveau</option>`;
+
+    document.getElementById("domicile").innerHTML = equipes.length ? makeOptions : empty;
+    document.getElementById("exterieur").innerHTML = equipes.length ? makeOptions : empty;
+}
+
+function afficherErreurMatch(msg) {
+    const el = document.getElementById("match-erreur");
+    if (el) {
+        el.textContent = msg;
+        el.style.display = "block";
+    }
 }
 
 async function ajouterMatch() {
 
-    const equipe_domicile =
-        document.getElementById("domicile").value;
+    const equipe_domicile = document.getElementById("domicile").value;
+    const equipe_exterieur = document.getElementById("exterieur").value;
 
-    const equipe_exterieur =
-        document.getElementById("exterieur").value;
-
-    // Validation : les deux clubs doivent être différents
-    if (equipe_domicile === equipe_exterieur) {
-        alert("❌ Les deux équipes doivent être différentes !");
+    if (!equipe_domicile || !equipe_exterieur) {
+        afficherErreurMatch("❌ Aucune équipe disponible pour ce niveau.");
         return;
     }
 
-    const score_domicile =
-        parseInt(document.getElementById("scoreDom").value, 10);
+    if (equipe_domicile === equipe_exterieur) {
+        afficherErreurMatch("❌ Les deux équipes doivent être différentes.");
+        return;
+    }
 
-    const score_exterieur =
-        parseInt(document.getElementById("scoreExt").value, 10);
+    const score_domicile = parseInt(document.getElementById("scoreDom").value, 10);
+    const score_exterieur = parseInt(document.getElementById("scoreExt").value, 10);
 
-    // Validation : les scores doivent être des nombres valides
     if (isNaN(score_domicile) || isNaN(score_exterieur)) {
-        alert("❌ Veuillez saisir des scores valides.");
+        afficherErreurMatch("❌ Veuillez saisir des scores valides.");
         return;
     }
 
@@ -1935,18 +1968,12 @@ async function ajouterMatch() {
 
     if (response.ok) {
 
-        alert("✅ Match ajouté !");
-        // Petit délai pour laisser Supabase recalculer la vue_classement
-        await new Promise(resolve => setTimeout(resolve, 500));
         showPage('classement');
 
     } else {
 
-        const erreur =
-            await response.text();
-
-        console.error(erreur);
-
-        alert("❌ " + erreur);
+        const erreur = await response.json();
+        const msg = erreur?.message || JSON.stringify(erreur);
+        afficherErreurMatch("❌ " + msg);
     }
 }
