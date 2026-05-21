@@ -521,7 +521,7 @@ function afficherJoueurs(title, subtitle, content) {
 
                 // Objet complet envoyé à la modale
                 const joueurData = {
-                    nom: onclick="supprimerJoueur(${joueur.id})",
+                    nom: onclick = "supprimerJoueur(${joueur.id})",
                     prenom: joueur.prenom,
                     age: joueur.age ?? calculerAge(joueur.dateNaissance),
                     poste: joueur.poste,
@@ -543,12 +543,7 @@ function afficherJoueurs(title, subtitle, content) {
                             </button>
 
                             <button class="action-btn danger-btn"
-                                    onclick="supprimerJoueur(
-                                        '${escapeJs(club.nom)}',
-                                        '${escapeJs(equipe.niveau)}',
-                                        '${escapeJs(joueur.nom)}',
-                                        '${escapeJs(joueur.prenom)}'
-                                    )">
+                                onclick="supprimerJoueur(${joueur.id})">
                                 🗑️ Supprimer
                             </button>
                         </div>
@@ -911,6 +906,7 @@ function fermerModalClub() {
         .getElementById("modal-club")
         .classList.add("hidden");
 }
+
 // ===================================================================
 // API - EQUIPES
 // ===================================================================
@@ -1255,9 +1251,6 @@ async function supprimerJoueur(idJoueur) {
 
     try {
 
-        // =========================
-        // Suppression joueur
-        // =========================
         const response = await fetch(
             `${SUPABASE_URL}/joueurs?id_joueur=eq.${idJoueur}`,
             {
@@ -1286,9 +1279,6 @@ async function supprimerJoueur(idJoueur) {
             return;
         }
 
-        // =========================
-        // Suppression personne
-        // =========================
         await fetch(
             `${SUPABASE_URL}/personne?id_personne=eq.${idJoueur}`,
             {
@@ -1317,6 +1307,7 @@ async function supprimerJoueur(idJoueur) {
         );
     }
 }
+
 // ===================================================================
 // OUTILS HTTP
 // ===================================================================
