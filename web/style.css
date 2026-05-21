@@ -900,25 +900,7 @@ body {
 }
 
 .joueurs-filtres input {
-    flex: 1;
-    min-width: 0;
-
-    padding: 14px 18px;
-
-    border-radius: 14px;
-    border: 1px solid #2d3748;
-
-    background: #111827;
-    color: white;
-
-    font-size: 14px;
-    outline: none;
-
-    transition: all 0.25s ease;
-}
-
-.joueurs-filtres select {
-    width: 260px;
+    width: 320px;
     flex-shrink: 0;
 
     padding: 14px 18px;
@@ -935,10 +917,22 @@ body {
     transition: all 0.25s ease;
 }
 
-.joueurs-filtres input:focus,
-.joueurs-filtres select:focus {
-    border-color: #38bdf8;
-    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.12);
+.joueurs-filtres select {
+    flex: 1;
+    min-width: 0;
+
+    padding: 14px 18px;
+
+    border-radius: 14px;
+    border: 1px solid #2d3748;
+
+    background: #111827;
+    color: white;
+
+    font-size: 14px;
+    outline: none;
+
+    transition: all 0.25s ease;
 }
 
 .joueur-card {
