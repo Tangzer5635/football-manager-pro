@@ -894,27 +894,51 @@ body {
 
 .joueurs-filtres {
     display: flex;
-    gap: 15px;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
 }
 
-.joueurs-filtres input,
-.joueurs-filtres select {
-    padding: 12px 16px;
-    border-radius: 12px;
+.joueurs-filtres input {
+    flex: 1;
+    min-width: 0;
+
+    padding: 14px 18px;
+
+    border-radius: 14px;
     border: 1px solid #2d3748;
-    background: #1a202c;
+
+    background: #111827;
     color: white;
+
     font-size: 14px;
-    min-width: 220px;
     outline: none;
-    transition: 0.2s;
+
+    transition: all 0.25s ease;
+}
+
+.joueurs-filtres select {
+    width: 260px;
+    flex-shrink: 0;
+
+    padding: 14px 18px;
+
+    border-radius: 14px;
+    border: 1px solid #2d3748;
+
+    background: #111827;
+    color: white;
+
+    font-size: 14px;
+    outline: none;
+
+    transition: all 0.25s ease;
 }
 
 .joueurs-filtres input:focus,
 .joueurs-filtres select:focus {
     border-color: #38bdf8;
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.12);
 }
 
 .joueur-card {
