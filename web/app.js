@@ -1940,8 +1940,7 @@ function ouvrirModalMatch() {
                 <button class="modal-close">✕</button>
             </div>
 
-            <form id="form-match">
-
+            <form onsubmit="event.preventDefault(); ajouterMatch();">
                 <div class="form-group">
                     <label>Équipe domicile</label>
                     <select id="domicile" required>
@@ -2012,6 +2011,16 @@ function ouvrirModalMatch() {
                 },
                 body: JSON.stringify(body)
             });
+
+            if (response.ok) {
+
+                document.querySelector(".modal")?.remove();
+
+                await chargerDonnees();
+
+                showPage('matchs');
+
+            } else {
 
             modal.remove();
 
