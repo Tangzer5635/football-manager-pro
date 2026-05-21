@@ -521,7 +521,7 @@ function afficherJoueurs(title, subtitle, content) {
 
                 // Objet complet envoyé à la modale
                 const joueurData = {
-                    nom: joueur.nom,
+                    nom: onclick="supprimerJoueur(${joueur.id})",
                     prenom: joueur.prenom,
                     age: joueur.age ?? calculerAge(joueur.dateNaissance),
                     poste: joueur.poste,
@@ -1247,20 +1247,76 @@ function ajouterJoueur() {
         .classList.remove("hidden");
 }
 
-async function supprimerJoueur(clubNom, niveau, nom, prenom, age) {
-    if (!confirm(`Supprimer ${prenom} ${nom} ?`)) return;
+async function supprimerJoueur(idJoueur) {
 
-    await deleteForm("http://localhost:8080/joueurs", {
-        clubNom,
-        niveau,
-        nom,
-        prenom,
-        age
-    });
+    if (!confirm("Supprimer ce joueur ?")) {
+        return;
+    }
 
-    await rafraichir("joueurs");
+    try {
+
+        // =========================
+        // Suppression joueur
+        // =========================
+        const response = await fetch(
+            `${SUPABASE_URL}/joueurs?id_joueur=eq.${idJoueur}`,
+            {
+                method: "DELETE",
+
+                headers: {
+                    apikey:
+                    SUPABASE_API_KEY,
+
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                }
+            }
+        );
+
+        if (!response.ok) {
+
+            console.log(
+                await response.text()
+            );
+
+            alert(
+                "Erreur suppression joueur."
+            );
+
+            return;
+        }
+
+        // =========================
+        // Suppression personne
+        // =========================
+        await fetch(
+            `${SUPABASE_URL}/personne?id_personne=eq.${idJoueur}`,
+            {
+                method: "DELETE",
+
+                headers: {
+                    apikey:
+                    SUPABASE_API_KEY,
+
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                }
+            }
+        );
+
+        await chargerDonnees();
+
+        showPage("joueurs");
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            "Erreur suppression joueur."
+        );
+    }
 }
-
 // ===================================================================
 // OUTILS HTTP
 // ===================================================================
@@ -1710,16 +1766,4 @@ function formatPrixInput(valeur) {
     }
 
     return `${prix}€`;
-}
-
-// Met à jour l'affichage sous le champ Prix
-function mettreAJourApercuPrix() {
-    const input = document.getElementById("joueur-prix");
-    const preview = document.getElementById("prix-preview");
-
-    if (!input || !preview) {
-        return;
-    }
-
-    preview.textContent = formatPrixInput(input.value);
 }
