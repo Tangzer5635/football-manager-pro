@@ -23,7 +23,13 @@ async function chargerDonnees() {
 
     try {
 
-        const [clubsRes, equipesRes, joueursRes] =
+        const [
+            clubsRes,
+            equipesRes,
+            personnesRes,
+            entraineursRes,
+            joueursRes
+        ] =
             await Promise.all([
 
                 fetch(
