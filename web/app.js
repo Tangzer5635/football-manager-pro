@@ -1711,9 +1711,8 @@ async function afficherClassement(
     try {
 
         const response = await fetch(
-            "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/vue_classement?select=*&order=points.desc,difference.desc&apikey="
-            + SUPABASE_API_KEY
-            + "&t=" + Date.now(),
+            "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/vue_classement?select=*&order=points.desc,difference.desc"
+            + "&apikey=" + SUPABASE_API_KEY,
             {
                 cache: "no-store"
             }
