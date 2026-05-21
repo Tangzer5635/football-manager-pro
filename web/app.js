@@ -684,7 +684,6 @@ async function supprimerClub(nom) {
 
             alert(erreur);
 
-            console.log(await response.text());
             return;
         }
 
