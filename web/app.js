@@ -554,27 +554,58 @@ function afficherJoueurs(title, subtitle, content) {
     });
 
     content.innerHTML = `
-        <div class="page-actions">
-            <button class="action-btn" onclick="ajouterJoueur()">
-                ➕ Ajouter un joueur
-            </button>
-        </div>
 
-        ${
+    <div class="joueurs-filtres">
+
+        <input
+            type="text"
+            id="recherche-joueur"
+            placeholder="🔎 Rechercher un joueur..."
+            oninput="filtrerJoueurs()"
+        >
+
+        <select id="filtre-equipe"
+                onchange="filtrerJoueurs()">
+
+            <option value="">
+                Toutes les équipes
+            </option>
+
+            ${data.clubs.flatMap(club =>
+        club.equipes.map(equipe => `
+                    <option value="${club.nom} - ${equipe.niveau}">
+                        ${club.nom} - ${equipe.niveau}
+                    </option>
+                `)
+    ).join("")}
+
+        </select>
+
+    </div>
+
+    <div class="page-actions">
+        <button class="action-btn" onclick="ajouterJoueur()">
+            ➕ Ajouter un joueur
+        </button>
+    </div>
+
+    ${
         cards === ""
             ? `
-                    <div class="card">
-                        <h3>Aucun joueur</h3>
-                        <p>Aucun joueur trouvé.</p>
-                    </div>
-                `
+                <div class="card joueur-card"
+     data-nom="${joueur.nom} ${joueur.prenom}"
+     data-equipe="${club.nom} - ${equipe.niveau}">
+                    <h3>Aucun joueur</h3>
+                    <p>Aucun joueur trouvé.</p>
+                </div>
+            `
             : `
-                    <div class="cards grid">
-                        ${cards}
-                    </div>
-                `
+                <div class="cards grid">
+                    ${cards}
+                </div>
+            `
     }
-    `;
+`;
 }
 
 function formatPrix(prix) {
@@ -1757,4 +1788,33 @@ function formatPrixInput(valeur) {
     }
 
     return `${prix}€`;
+}
+
+function filtrerJoueurs() {
+    const recherche = document
+        .getElementById("recherche-joueur")
+        .value
+        .toLowerCase();
+
+    const equipe = document
+        .getElementById("filtre-equipe")
+        .value
+        .toLowerCase();
+
+    const cards = document.querySelectorAll(".joueur-card");
+
+    cards.forEach(card => {
+        const nom = card.dataset.nom.toLowerCase();
+        const equipeNom = card.dataset.equipe.toLowerCase();
+
+        const matchNom = nom.includes(recherche);
+        const matchEquipe =
+            equipe === "" || equipeNom.includes(equipe);
+
+        if (matchNom && matchEquipe) {
+            card.style.display = "flex";
+        } else {
+            card.style.display = "none";
+        }
+    });
 }
