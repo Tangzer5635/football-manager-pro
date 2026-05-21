@@ -732,16 +732,15 @@ function filtrerTitulairesParEquipe() {
             }).join("");
 
             cards += `
-                <div class="card joueur-card"
-                     data-nom="${joueur.prenom} ${joueur.nom}"
-                     data-equipe="${club.nom} - ${equipe.niveau}">
-                    <h3>🏟️ ${club.nom}</h3>
-                    <p><strong>Niveau :</strong> ${equipe.niveau}</p>
-                    <div style="margin-top: 12px;">
-                        ${liste}
-                    </div>
+            <div class="card">
+                <h3>🏟️ ${club.nom}</h3>
+                <p><strong>Niveau :</strong> ${equipe.niveau}</p>
+        
+                <div style="margin-top: 12px;">
+                    ${liste}
                 </div>
-            `;
+            </div>
+        `;
         });
     });
 
