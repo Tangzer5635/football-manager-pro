@@ -19,6 +19,8 @@ const SUPABASE_URL =
 
 const SUPABASE_API_KEY =
     "sb_publishable_qCzHEqb9ulwCVpy_jZ-DQQ_OsGW5lcT";
+
+
 async function chargerDonnees() {
 
     try {
@@ -36,7 +38,9 @@ async function chargerDonnees() {
                     `${SUPABASE_URL}/club?select=*`,
                     {
                         headers: {
-                            apikey: SUPABASE_API_KEY,
+                            apikey:
+                            SUPABASE_API_KEY,
+
                             Authorization:
                                 `Bearer ${SUPABASE_API_KEY}`
                         }
@@ -47,7 +51,9 @@ async function chargerDonnees() {
                     `${SUPABASE_URL}/equipe?select=*`,
                     {
                         headers: {
-                            apikey: SUPABASE_API_KEY,
+                            apikey:
+                            SUPABASE_API_KEY,
+
                             Authorization:
                                 `Bearer ${SUPABASE_API_KEY}`
                         }
@@ -58,7 +64,9 @@ async function chargerDonnees() {
                     `${SUPABASE_URL}/personne?select=*`,
                     {
                         headers: {
-                            apikey: SUPABASE_API_KEY,
+                            apikey:
+                            SUPABASE_API_KEY,
+
                             Authorization:
                                 `Bearer ${SUPABASE_API_KEY}`
                         }
@@ -69,7 +77,9 @@ async function chargerDonnees() {
                     `${SUPABASE_URL}/entraineur?select=*`,
                     {
                         headers: {
-                            apikey: SUPABASE_API_KEY,
+                            apikey:
+                            SUPABASE_API_KEY,
+
                             Authorization:
                                 `Bearer ${SUPABASE_API_KEY}`
                         }
@@ -80,7 +90,9 @@ async function chargerDonnees() {
                     `${SUPABASE_URL}/joueurs?select=*`,
                     {
                         headers: {
-                            apikey: SUPABASE_API_KEY,
+                            apikey:
+                            SUPABASE_API_KEY,
+
                             Authorization:
                                 `Bearer ${SUPABASE_API_KEY}`
                         }
@@ -88,9 +100,11 @@ async function chargerDonnees() {
                 )
             ]);
 
-        const clubs = await clubsRes.json();
+        const clubs =
+            await clubsRes.json();
 
-        const equipes = await equipesRes.json();
+        const equipes =
+            await equipesRes.json();
 
         const personnes =
             await personnesRes.json();
@@ -104,93 +118,137 @@ async function chargerDonnees() {
         data = {
             clubs: clubs.map(club => ({
 
-                id: club.id_club,
-                nom: club.nom_club,
-                dateCreation: club.date_creation,
+                id:
+                club.id_club,
 
-                equipes: equipes
-                    .filter(
-                        equipe =>
-                            equipe.id_club === club.id_club
-                    )
-                    .map(equipe => {
+                nom:
+                club.nom_club,
 
-                        const entraineur =
-                            entraineurs.find(
-                                e =>
-                                    e.id_entraineur ===
-                                    equipe.id_entraineur
-                            );
+                dateCreation:
+                club.date_creation,
 
-                        const personne =
-                            personnes.find(
-                                p =>
-                                    p.id_personne ===
-                                    entraineur?.id_entraineur
-                            );
+                equipes:
+                    equipes
 
-                        return {
+                        .filter(
+                            equipe =>
+                                equipe.id_club ===
+                                club.id_club
+                        )
 
-                            id: equipe.id_equipe,
+                        .map(equipe => {
 
-                            nom: equipe.nom_equipe,
+                            const entraineur =
+                                entraineurs.find(
+                                    e =>
+                                        e.id_entraineur ===
+                                        equipe.id_entraineur
+                                );
 
-                            entraineur:
-                                personne
-                                    ? `${personne.prenom} ${personne.nom}`
-                                    : "-",
+                            const personneCoach =
+                                personnes.find(
+                                    p =>
+                                        p.id_personne ===
+                                        entraineur?.id_entraineur
+                                );
 
-                            niveau:
-                                {
-                                    1: "Ligue 1",
-                                    2: "Ligue 2",
-                                    3: "Ligue 3",
-                                    4: "National",
-                                    5: "National 2",
-                                    6: "National 3",
-                                }[equipe.id_niveau] || "Inconnu",
+                            return {
 
-                            joueurs: joueurs
-                                .filter(
-                                    joueur =>
-                                        joueur.id_equipe ===
-                                        equipe.id_equipe
-                                )
-                                .map(joueur => {
+                                id:
+                                equipe.id_equipe,
 
-                                    const personne =
-                                        personnes.find(
-                                            p =>
-                                                p.id_personne ===
-                                                joueur.id_joueur
-                                        );
+                                nom:
+                                equipe.nom_equipe,
 
-                                    return {
+                                niveau:
+                                    {
+                                        1: "Ligue 1",
+                                        2: "Ligue 2",
+                                        3: "Ligue 3",
+                                        4: "National",
+                                        5: "National 2",
+                                        6: "National 3"
+                                    }[equipe.id_niveau]
+                                    || "Inconnu",
 
-                                        ...joueur,
+                                entraineur:
+                                    personneCoach
+                                        ? `${personneCoach.prenom} ${personneCoach.nom}`
+                                        : "-",
 
-                                        nom:
-                                            personne?.nom || "-",
+                                joueurs:
+                                    joueurs
 
-                                        prenom:
-                                            personne?.prenom || "-"
-                                    };
-                                })
-                        };
-                    })
+                                        .filter(
+                                            joueur =>
+                                                joueur.id_equipe ===
+                                                equipe.id_equipe
+                                        )
+
+                                        .map(joueur => {
+
+                                            const personne =
+                                                personnes.find(
+                                                    p =>
+                                                        p.id_personne ===
+                                                        joueur.id_joueur
+                                                );
+
+                                            const naissance =
+                                                new Date(
+                                                    joueur.date_naissance
+                                                );
+
+                                            const age =
+                                                new Date().getFullYear()
+                                                -
+                                                naissance.getFullYear();
+
+                                            return {
+
+                                                id:
+                                                joueur.id_joueur,
+
+                                                nom:
+                                                    personne?.nom || "-",
+
+                                                prenom:
+                                                    personne?.prenom || "-",
+
+                                                age:
+                                                age,
+
+                                                poste:
+                                                    {
+                                                        1: "Gardien",
+                                                        2: "Défenseur",
+                                                        3: "Milieu",
+                                                        4: "Attaquant"
+                                                    }[joueur.id_poste]
+                                                    || "-",
+
+                                                prix:
+                                                joueur.prix,
+
+                                                titulaire:
+                                                joueur.titulaire
+                                            };
+                                        })
+                            };
+                        })
             }))
         };
-
-        console.log(data);
 
     } catch (error) {
 
         console.error(
-            "Erreur chargement Supabase :",
+            "Erreur chargement données :",
             error
         );
 
-        data = { clubs: [] };
+        data = {
+            clubs: []
+        };
     }
 }
 
@@ -1458,22 +1516,6 @@ async function soumettreAjoutJoueur() {
             "joueur-titulaire"
         ).checked;
 
-    if (
-        !clubNom ||
-        !niveau ||
-        !nom ||
-        !prenom ||
-        !dateNaissance ||
-        !poste ||
-        !prix
-    ) {
-        alert(
-            "Veuillez remplir tous les champs."
-        );
-
-        return;
-    }
-
     const club = data.clubs.find(
         c => c.nom === clubNom
     );
@@ -1494,35 +1536,15 @@ async function soumettreAjoutJoueur() {
 
     try {
 
-        // =====================================
-        // Récupération personnes
-        // =====================================
-        const personnesRes = await fetch(
-            `${SUPABASE_URL}/personne?select=id_personne`,
-            {
-                headers: {
-                    apikey: SUPABASE_API_KEY,
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
-                }
-            }
-        );
-
-        const personnes =
-            await personnesRes.json();
-
-        // =====================================
-        // Génération ID
-        // =====================================
         const nouvelId =
             Math.floor(
                 1000 +
                 Math.random() * 900000
             );
 
-        // =====================================
+        // =========================
         // Création PERSONNE
-        // =====================================
+        // =========================
         await fetch(
             `${SUPABASE_URL}/personne`,
             {
@@ -1553,11 +1575,9 @@ async function soumettreAjoutJoueur() {
             }
         );
 
-        // =====================================
+        // =========================
         // Création JOUEUR
-        // =====================================
-        console.log(poste);
-        console.log(Number(poste));
+        // =========================
         const response = await fetch(
             `${SUPABASE_URL}/joueurs`,
             {
@@ -1577,7 +1597,7 @@ async function soumettreAjoutJoueur() {
                 body: JSON.stringify({
 
                     id_joueur:
-                        nouvelId,
+                    nouvelId,
 
                     prix:
                         Number(prix),
@@ -1615,7 +1635,9 @@ async function soumettreAjoutJoueur() {
 
         fermerModalJoueur();
 
-        await rafraichir("joueurs");
+        await chargerDonnees();
+
+        showPage("joueurs");
 
     } catch (error) {
 
