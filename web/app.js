@@ -1,244 +1,152 @@
-let data = {clubs: []};
+// ===================================================================
+// CONFIG SUPABASE
+// ===================================================================
+const SUPABASE_URL = "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1";
+const SUPABASE_API_KEY = "sb_publishable_qCzHEqb9ulwCVpy_jZ-DQQ_OsGW5lcT";
+
+const NIVEAUX = {
+    1: "Ligue 1",
+    2: "Ligue 2",
+    3: "Ligue 3",
+    4: "National",
+    5: "National 2",
+    6: "National 3"
+};
+
+const POSTES = {
+    1: "Gardien",
+    2: "Défenseur",
+    3: "Milieu",
+    4: "Attaquant"
+};
+
+// ===================================================================
+// ÉTAT GLOBAL
+// ===================================================================
+let data = { clubs: [] };
+
+// ===================================================================
+// UTILITAIRE API
+// ===================================================================
+async function api(path, options = {}) {
+    const headers = {
+        apikey: SUPABASE_API_KEY,
+        Authorization: `Bearer ${SUPABASE_API_KEY}`,
+        ...options.headers
+    };
+    const res = await fetch(`${SUPABASE_URL}${path}`, { ...options, headers });
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`API error ${res.status}: ${text}`);
+    }
+    // DELETE / POST with return=minimal renvoient un corps vide
+    const contentType = res.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+        return res.json();
+    }
+    return null;
+}
 
 // ===================================================================
 // CHARGEMENT DES DONNÉES
 // ===================================================================
-const SUPABASE_URL =
-    "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1";
-
-const SUPABASE_API_KEY =
-    "sb_publishable_qCzHEqb9ulwCVpy_jZ-DQQ_OsGW5lcT";
-
-
 async function chargerDonnees() {
-
     try {
-
-        const [
-            clubsRes,
-            equipesRes,
-            personnesRes,
-            entraineursRes,
-            joueursRes
-        ] =
-            await Promise.all([
-
-                fetch(
-                    `${SUPABASE_URL}/club?select=*`,
-                    {
-                        headers: {
-                            apikey:
-                            SUPABASE_API_KEY,
-
-                            Authorization:
-                                `Bearer ${SUPABASE_API_KEY}`
-                        }
-                    }
-                ),
-
-                fetch(
-                    `${SUPABASE_URL}/equipe?select=*`,
-                    {
-                        headers: {
-                            apikey:
-                            SUPABASE_API_KEY,
-
-                            Authorization:
-                                `Bearer ${SUPABASE_API_KEY}`
-                        }
-                    }
-                ),
-
-                fetch(
-                    `${SUPABASE_URL}/personne?select=*`,
-                    {
-                        headers: {
-                            apikey:
-                            SUPABASE_API_KEY,
-
-                            Authorization:
-                                `Bearer ${SUPABASE_API_KEY}`
-                        }
-                    }
-                ),
-
-                fetch(
-                    `${SUPABASE_URL}/entraineur?select=*`,
-                    {
-                        headers: {
-                            apikey:
-                            SUPABASE_API_KEY,
-
-                            Authorization:
-                                `Bearer ${SUPABASE_API_KEY}`
-                        }
-                    }
-                ),
-
-                fetch(
-                    `${SUPABASE_URL}/joueurs?select=*`,
-                    {
-                        headers: {
-                            apikey:
-                            SUPABASE_API_KEY,
-
-                            Authorization:
-                                `Bearer ${SUPABASE_API_KEY}`
-                        }
-                    }
-                )
-            ]);
-
-        const clubs =
-            await clubsRes.json();
-
-        const equipes =
-            await equipesRes.json();
-
-        const personnes =
-            await personnesRes.json();
-
-        const entraineurs =
-            await entraineursRes.json();
-
-        const joueurs =
-            await joueursRes.json();
+        const [clubs, equipes, personnes, entraineurs, joueurs] = await Promise.all([
+            api("/club?select=*"),
+            api("/equipe?select=*"),
+            api("/personne?select=*"),
+            api("/entraineur?select=*"),
+            api("/joueurs?select=*")
+        ]);
 
         data = {
             clubs: clubs.map(club => ({
+                id: club.id_club,
+                nom: club.nom_club,
+                dateCreation: club.date_creation,
+                equipes: equipes
+                    .filter(e => e.id_club === club.id_club)
+                    .map(equipe => {
+                        const entraineur = entraineurs.find(e => e.id_entraineur === equipe.id_entraineur);
+                        const personneCoach = personnes.find(p => p.id_personne === entraineur?.id_entraineur);
 
-                id:
-                club.id_club,
-
-                nom:
-                club.nom_club,
-
-                dateCreation:
-                club.date_creation,
-
-                equipes:
-                    equipes
-
-                        .filter(
-                            equipe =>
-                                equipe.id_club ===
-                                club.id_club
-                        )
-
-                        .map(equipe => {
-
-                            const entraineur =
-                                entraineurs.find(
-                                    e =>
-                                        e.id_entraineur ===
-                                        equipe.id_entraineur
-                                );
-
-                            const personneCoach =
-                                personnes.find(
-                                    p =>
-                                        p.id_personne ===
-                                        entraineur?.id_entraineur
-                                );
-
-                            return {
-
-                                id:
-                                equipe.id_equipe,
-
-                                nom:
-                                equipe.nom_equipe,
-
-                                niveau:
-                                    {
-                                        1: "Ligue 1",
-                                        2: "Ligue 2",
-                                        3: "Ligue 3",
-                                        4: "National",
-                                        5: "National 2",
-                                        6: "National 3"
-                                    }[equipe.id_niveau]
-                                    || "Inconnu",
-
-                                entraineur:
-                                    personneCoach
-                                        ? `${personneCoach.prenom} ${personneCoach.nom}`
-                                        : "-",
-
-                                joueurs:
-                                    joueurs
-
-                                        .filter(
-                                            joueur =>
-                                                joueur.id_equipe ===
-                                                equipe.id_equipe
-                                        )
-
-                                        .map(joueur => {
-
-                                            const personne =
-                                                personnes.find(
-                                                    p =>
-                                                        p.id_personne ===
-                                                        joueur.id_joueur
-                                                );
-
-                                            const naissance =
-                                                new Date(
-                                                    joueur.date_naissance
-                                                );
-
-                                            const age =
-                                                new Date().getFullYear()
-                                                -
-                                                naissance.getFullYear();
-
-                                            return {
-
-                                                id:
-                                                joueur.id_joueur,
-
-                                                nom:
-                                                    personne?.nom || "-",
-
-                                                prenom:
-                                                    personne?.prenom || "-",
-
-                                                age:
-                                                age,
-
-                                                poste:
-                                                    {
-                                                        1: "Gardien",
-                                                        2: "Défenseur",
-                                                        3: "Milieu",
-                                                        4: "Attaquant"
-                                                    }[joueur.id_poste]
-                                                    || "-",
-
-                                                prix:
-                                                joueur.prix,
-
-                                                titulaire:
-                                                joueur.titulaire
-                                            };
-                                        })
-                            };
-                        })
+                        return {
+                            id: equipe.id_equipe,
+                            nom: equipe.nom_equipe,
+                            idNiveau: equipe.id_niveau,
+                            niveau: NIVEAUX[equipe.id_niveau] || "Inconnu",
+                            entraineur: personneCoach
+                                ? `${personneCoach.prenom} ${personneCoach.nom}`
+                                : "-",
+                            joueurs: joueurs
+                                .filter(j => j.id_equipe === equipe.id_equipe)
+                                .map(joueur => {
+                                    const personne = personnes.find(p => p.id_personne === joueur.id_joueur);
+                                    return {
+                                        id: joueur.id_joueur,
+                                        nom: personne?.nom || "-",
+                                        prenom: personne?.prenom || "-",
+                                        age: calculerAge(joueur.date_naissance),
+                                        dateNaissance: joueur.date_naissance,
+                                        poste: POSTES[joueur.id_poste] || "-",
+                                        prix: joueur.prix,
+                                        titulaire: joueur.titulaire
+                                    };
+                                })
+                        };
+                    })
             }))
         };
-
     } catch (error) {
-
-        console.error(
-            "Erreur chargement données :",
-            error
-        );
-
-        data = {
-            clubs: []
-        };
+        console.error("Erreur chargement données :", error);
+        data = { clubs: [] };
     }
+}
+
+// ===================================================================
+// UTILITAIRES
+// ===================================================================
+function calculerAge(dateNaissance) {
+    if (!dateNaissance) return "?";
+    const naissance = new Date(dateNaissance);
+    if (isNaN(naissance)) return "?";
+    const auj = new Date();
+    let age = auj.getFullYear() - naissance.getFullYear();
+    const mois = auj.getMonth() - naissance.getMonth();
+    if (mois < 0 || (mois === 0 && auj.getDate() < naissance.getDate())) age--;
+    return age;
+}
+
+function formatDate(date) {
+    if (!date) return "";
+    const d = new Date(date);
+    return isNaN(d) ? date : d.toLocaleDateString("fr-FR");
+}
+
+function formatPrix(prix) {
+    prix = Number(prix);
+    if (prix >= 1_000_000_000) return `${(prix / 1_000_000_000).toFixed(1).replace(/\.0$/, "")} Md€`;
+    if (prix >= 1_000_000)     return `${(prix / 1_000_000).toFixed(1).replace(/\.0$/, "")}M€`;
+    if (prix >= 1_000)         return `${(prix / 1_000).toFixed(1).replace(/\.0$/, "")}k€`;
+    return `${prix}€`;
+}
+
+function escapeJs(str) {
+    return String(str).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+function getNiveauxDisponibles() {
+    const niveaux = new Map();
+    data.clubs.forEach(club => {
+        club.equipes.forEach(equipe => {
+            if (!niveaux.has(equipe.idNiveau)) {
+                niveaux.set(equipe.idNiveau, equipe.niveau);
+            }
+        });
+    });
+    // Tri par id_niveau
+    return Array.from(niveaux.entries()).sort((a, b) => a[0] - b[0]);
 }
 
 // ===================================================================
@@ -253,1043 +161,21 @@ window.addEventListener("DOMContentLoaded", async () => {
 // NAVIGATION
 // ===================================================================
 function showPage(page) {
-    const title = document.getElementById("page-title");
+    const title    = document.getElementById("page-title");
     const subtitle = document.getElementById("page-subtitle");
-    const content = document.getElementById("page-content");
-
-    switch (page) {
-        case "dashboard":
-            afficherDashboard(title, subtitle, content);
-            break;
-        case "clubs":
-            afficherClubs(title, subtitle, content);
-            break;
-        case "equipes":
-            afficherEquipes(title, subtitle, content);
-            break;
-        case "joueurs":
-            afficherJoueurs(title, subtitle, content);
-            break;
-        case "titulaires":
-            afficherTitulaires(title, subtitle, content);
-            break;
-        case 'classement':
-            afficherClassement(title, subtitle, content);
-            break;
-        case 'matchs':
-            afficherMatchs(title, subtitle, content);
-            break;
-    }
-}
-
-// ===================================================================
-// DASHBOARD
-// ===================================================================
-function afficherDashboard(title, subtitle, content) {
-    const nbClubs = data.clubs.length;
-
-    let nbEquipes = 0;
-    let nbJoueurs = 0;
-    let nbTitulaires = 0;
-
-    data.clubs.forEach(club => {
-        nbEquipes += club.equipes.length;
-
-        club.equipes.forEach(equipe => {
-            nbJoueurs += equipe.joueurs.length;
-
-            equipe.joueurs.forEach(joueur => {
-                if (joueur.titulaire) nbTitulaires++;
-            });
-        });
-    });
-
-    title.textContent = "Dashboard";
-    subtitle.textContent = "Vue d'ensemble de votre club";
-
-    content.innerHTML = `
-    <div class="cards grid">
-        <div class="card">
-            <h3>🏟️ Clubs</h3>
-            <p>${nbClubs} club(s)</p>
-            <button class="action-btn" onclick="ouvrirModalClub()">
-                ➕ Créer un club
-            </button>
-        </div>
-
-        <div class="card">
-            <h3>👥 Équipes</h3>
-            <p>${nbEquipes} équipe(s)</p>
-            <button class="action-btn" onclick="creerEquipe()">
-                ➕ Créer une équipe
-            </button>
-        </div>
-
-        <div class="card">
-            <h3>⚽ Joueurs</h3>
-            <p>${nbJoueurs} joueur(s)</p>
-            <button class="action-btn" onclick="ajouterJoueur()">
-                ➕ Ajouter un joueur
-            </button>
-        </div>
-
-        <div class="card">
-            <h3>⭐ Titulaires</h3>
-            <p>${nbTitulaires} titulaire(s)</p>
-        </div>
-    </div>
-`;
-}
-
-// ===================================================================
-// CLUBS
-// ===================================================================
-function afficherClubs(title, subtitle, content) {
-    title.textContent = "Clubs";
-    subtitle.textContent = "Gestion des clubs";
-
-    let rows = "";
-
-    data.clubs.forEach((club, index) => {
-        rows += `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${club.nom}</td>
-                <td>${formatDate(club.dateCreation)}</td>
-                <td>${club.equipes.length}</td>
-                <td>
-                    <button class="action-btn danger-btn"
-                            onclick="supprimerClub('${escapeJs(club.nom)}')">
-                        🗑️ Supprimer
-                    </button>
-                </td>
-            </tr>
-        `;
-    });
-
-    content.innerHTML = `
-    <div class="page-actions">
-        <button class="action-btn" onclick="ouvrirModalClub()">
-            ➕ Créer un club
-        </button>
-    </div>
-
-    ${
-        rows === ""
-            ? `
-                <div class="card">
-                    <h3>Aucun club</h3>
-                    <p>Aucun club trouvé.</p>
-                </div>
-            `
-            : `
-                <div class="table-wrapper">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Nom</th>
-                                <th>Date de création</th>
-                                <th>Équipes</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rows}
-                        </tbody>
-                    </table>
-                </div>
-            `
-    }
-`;
-}
-
-// ===================================================================
-// EQUIPES
-// ===================================================================
-function afficherEquipes(title, subtitle, content) {
-    title.textContent = "Équipes";
-    subtitle.textContent = "Gestion des équipes";
-
-    let rows = "";
-    let index = 1;
-
-    data.clubs.forEach(club => {
-        club.equipes.forEach(equipe => {
-            rows += `
-                <tr>
-                    <td>${index++}</td>
-                    <td>${club.nom}</td>
-                    <td>${equipe.niveau}</td>
-                    <td>${equipe.entraineur}</td>
-                    <td>${equipe.joueurs.length}</td>
-                    <td>
-                        <button class="action-btn danger-btn"
-                                onclick="supprimerEquipe(${equipe.id})">
-                            🗑️ Supprimer
-                        </button>
-                    </td>
-                </tr>
-            `;
-        });
-    });
-
-    content.innerHTML = `
-    <div class="page-actions">
-        <button class="action-btn" onclick="creerEquipe()">
-            ➕ Créer une équipe
-        </button>
-    </div>
-
-    ${
-        rows === ""
-            ? `
-                <div class="card">
-                    <h3>Aucune équipe</h3>
-                    <p>Aucune équipe trouvée.</p>
-                </div>
-            `
-            : `
-                <div class="table-wrapper">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Club</th>
-                                <th>Niveau</th>
-                                <th>Entraîneur</th>
-                                <th>Joueurs</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rows}
-                        </tbody>
-                    </table>
-                </div>
-            `
-    }
-`;
-}
-
-// ===================================================================
-// JOUEURS
-// ===================================================================
-function afficherJoueurs(title, subtitle, content) {
-    title.textContent = "Joueurs";
-    subtitle.textContent = "Gestion des joueurs";
-
-    let cards = "";
-
-    data.clubs.forEach(club => {
-        club.equipes.forEach(equipe => {
-            equipe.joueurs.forEach(joueur => {
-
-                // Si l'âge n'est pas présent dans le JSON,
-                // on le calcule à partir de dateNaissance
-                let age = joueur.age;
-
-                if (
-                    (age === undefined || age === null || age === "") &&
-                    joueur.dateNaissance
-                ) {
-                    const naissance = new Date(joueur.dateNaissance);
-                    const aujourdHui = new Date();
-
-                    age =
-                        aujourdHui.getFullYear() -
-                        naissance.getFullYear();
-
-                    const mois =
-                        aujourdHui.getMonth() -
-                        naissance.getMonth();
-
-                    if (
-                        mois < 0 ||
-                        (mois === 0 &&
-                            aujourdHui.getDate() <
-                            naissance.getDate())
-                    ) {
-                        age--;
-                    }
-                }
-
-                // Objet complet envoyé à la modale
-                const joueurData = {
-                    nom: joueur.nom,
-                    prenom: joueur.prenom,
-                    age: joueur.age ?? calculerAge(joueur.dateNaissance),
-                    poste: joueur.poste,
-                    prix: formatPrix(joueur.prix),
-                    titulaire: joueur.titulaire,
-                    club: club.nom,
-                    niveau: equipe.niveau,
-                    dateNaissance: joueur.dateNaissance
-                };
-
-                cards += `
-                    <div class="card joueur-card"
-                         data-nom="${joueur.prenom} ${joueur.nom}"
-                         data-equipe="${club.nom} - ${equipe.niveau}">
-                        <h3>${joueur.prenom} ${joueur.nom}</h3>
-                        <p><strong>Âge :</strong> ${age} ans</p>
-                        <p><strong>Poste :</strong> ${joueur.poste}</p>
-
-                        <div style="margin-top: 20px;">
-                            <button class="action-btn"
-                                onclick='afficherPresentationJoueur(${JSON.stringify(joueurData)})'>
-                                👁️ Présentation
-                            </button>
-
-                            <button class="action-btn danger-btn"
-                                onclick="supprimerJoueur(${joueur.id})">
-                                🗑️ Supprimer
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-        });
-    });
-
-    content.innerHTML = `
-
-    <div class="joueurs-filtres">
-
-        <input
-            type="text"
-            id="recherche-joueur"
-            placeholder="🔎 Rechercher un joueur..."
-            oninput="filtrerJoueurs()"
-        >
-
-        <select id="filtre-equipe"
-                onchange="filtrerJoueurs()">
-
-            <option value="">
-                Toutes les équipes
-            </option>
-
-            ${data.clubs.flatMap(club =>
-        club.equipes.map(equipe => `
-                    <option value="${club.nom} - ${equipe.niveau}">
-                        ${club.nom} - ${equipe.niveau}
-                    </option>
-                `)
-    ).join("")}
-
-        </select>
-
-    </div>
-
-    <div class="page-actions">
-        <button class="action-btn" onclick="ajouterJoueur()">
-            ➕ Ajouter un joueur
-        </button>
-    </div>
-
-    ${
-        cards === ""
-            ? `
-                <div class="card">
-                    <h3>Aucun joueur</h3>
-                    <p>Aucun joueur trouvé.</p>
-                </div>
-            `
-            : `
-                <div class="cards grid">
-                    ${cards}
-                </div>
-            `
-    }
-`;
-}
-
-function formatPrix(prix) {
-    prix = Number(prix);
-
-    if (prix >= 1_000_000_000) {
-        const milliards = prix / 1_000_000_000;
-        return Number.isInteger(milliards)
-            ? `${milliards} Md€`
-            : `${milliards.toFixed(1)} Md€`;
-    }
-
-    if (prix >= 1_000_000) {
-        const millions = prix / 1_000_000;
-        return Number.isInteger(millions)
-            ? `${millions}M€`
-            : `${millions.toFixed(1)}M€`;
-    }
-
-    if (prix >= 1_000) {
-        const milliers = prix / 1_000;
-        return Number.isInteger(milliers)
-            ? `${milliers}k€`
-            : `${milliers.toFixed(1)}k€`;
-    }
-
-    return `${prix}€`;
-}
-
-// ===================================================================
-// TITULAIRES
-// ===================================================================
-function afficherTitulaires(title, subtitle, content) {
-    title.textContent = "Titulaires";
-    subtitle.textContent = "Recherche des joueurs titulaires par équipe";
-
-    // Liste de toutes les équipes
-    let options = '<option value="">Toutes les équipes</option>';
-
-    data.clubs.forEach(club => {
-        club.equipes.forEach(equipe => {
-            const valeur = `${club.nom}|${equipe.niveau}`;
-            const label = `${club.nom} - ${equipe.niveau}`;
-
-            options += `
-                <option value="${escapeJs(valeur)}">
-                    ${label}
-                </option>
-            `;
-        });
-    });
-
-    content.innerHTML = `
-        <div class="card">
-            <div class="form-group">
-                <label for="filtre-equipe">
-                    Rechercher les titulaires par équipe
-                </label>
-
-                <select id="filtre-equipe"
-                        onchange="filtrerTitulairesParEquipe()">
-                    ${options}
-                </select>
-            </div>
-        </div>
-
-        <div id="titulaires-resultats" class="cards grid"></div>
-    `;
-
-    // Affiche tous les titulaires au chargement
-    filtrerTitulairesParEquipe();
-}
-
-// ===================================================================
-// AJOUTE CETTE FONCTION dans app.js
-// ===================================================================
-function filtrerTitulairesParEquipe() {
-    const select = document.getElementById("filtre-equipe");
-    const container = document.getElementById("titulaires-resultats");
-
-    if (!select || !container) {
-        return;
-    }
-
-    const filtre = select.value;
-    let cards = "";
-
-    data.clubs.forEach(club => {
-        club.equipes.forEach(equipe => {
-
-            // Filtre sur l'équipe sélectionnée
-            if (filtre) {
-                const valeur = `${club.nom}|${equipe.niveau}`;
-
-                if (valeur !== filtre) {
-                    return;
-                }
-            }
-
-            // Récupère uniquement les titulaires
-            const titulaires = equipe.joueurs.filter(
-                joueur => joueur.titulaire === true
-            );
-
-            if (titulaires.length === 0) {
-                return;
-            }
-
-            const liste = titulaires.map(joueur => {
-                const age =
-                    joueur.age ??
-                    (joueur.dateNaissance
-                        ? calculerAge(joueur.dateNaissance)
-                        : "?");
-
-                return `
-                    <p>
-                        ⚽ <strong>${joueur.prenom} ${joueur.nom}</strong><br>
-                        ${joueur.poste} • ${age} ans • ${formatPrix(joueur.prix)}
-                    </p>
-                `;
-            }).join("");
-
-            cards += `
-            <div class="card">
-                <h3>🏟️ ${club.nom}</h3>
-                <p><strong>Niveau :</strong> ${equipe.niveau}</p>
-        
-                <div style="margin-top: 12px;">
-                    ${liste}
-                </div>
-            </div>
-        `;
-        });
-    });
-
-    if (cards === "") {
-        container.innerHTML = `
-            <div class="card">
-                <h3>Aucun titulaire</h3>
-                <p>Aucun joueur titulaire trouvé pour cette équipe.</p>
-            </div>
-        `;
-    } else {
-        container.innerHTML = cards;
-    }
-}
-
-// ===================================================================
-// API - CLUBS
-// ===================================================================
-async function creerClub() {
-
-    const nom = document
-        .getElementById("club-nom")
-        .value
-        .trim();
-
-    const dateCreation = document
-        .getElementById("club-date")
-        .value;
-
-    if (!nom || !dateCreation) {
-
-        afficherErreurModal(
-            "Veuillez remplir tous les champs."
-        );
-
-        return;
-    }
-
-    try {
-
-        const response = await fetch(
-            `${SUPABASE_URL}/club`,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json",
-                    apikey: SUPABASE_API_KEY,
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
-                },
-
-                body: JSON.stringify({
-
-                    nom_club: nom,
-
-                    date_creation: dateCreation
-                })
-            }
-        );
-
-        if (!response.ok) {
-
-            console.log(
-                await response.text()
-            );
-
-            afficherErreurModal(
-                "Erreur création club."
-            );
-
-            return;
-        }
-
-        document.getElementById(
-            "club-nom"
-        ).value = "";
-
-        document.getElementById(
-            "club-date"
-        ).value = "";
-        fermerModalClub();
-        await chargerDonnees();
-
-        showPage("clubs");
-
-    } catch (error) {
-
-        console.error(error);
-
-        afficherErreurModal(
-            "Erreur création club."
-        );
-    }
-}
-
-async function supprimerClub(nom) {
-
-    if (!confirm(`Supprimer le club "${nom}" ?`)) {
-        return;
-    }
-
-    const club = data.clubs.find(
-        c => c.nom === nom
-    );
-
-    if (!club) {
-        alert("Club introuvable");
-        return;
-    }
-
-    try {
-
-        // =========================
-        // Supprimer joueurs
-        // =========================
-        await fetch(
-            `${SUPABASE_URL}/joueurs?id_club=eq.${club.id}`,
-            {
-                method: "DELETE",
-
-                headers: {
-                    apikey: SUPABASE_API_KEY,
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
-                }
-            }
-        );
-
-        // =========================
-        // Supprimer équipes
-        // =========================
-        await fetch(
-            `${SUPABASE_URL}/equipe?id_club=eq.${club.id}`,
-            {
-                method: "DELETE",
-
-                headers: {
-                    apikey: SUPABASE_API_KEY,
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
-                }
-            }
-        );
-
-        // =========================
-        // Supprimer club
-        // =========================
-        const response = await fetch(
-            `${SUPABASE_URL}/club?id_club=eq.${club.id}`,
-            {
-                method: "DELETE",
-
-                headers: {
-                    apikey: SUPABASE_API_KEY,
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
-                }
-            }
-        );
-
-        if (!response.ok) {
-
-            console.log(
-                await response.text()
-            );
-
-            alert(
-                "Erreur suppression club."
-            );
-
-            return;
-        }
-
-        await rafraichir("clubs");
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(
-            "Erreur suppression."
-        );
-    }
-}
-
-function ouvrirModalClub() {
-
-    document
-        .getElementById("modal-club")
-        .classList.remove("hidden");
-}
-
-function fermerModalClub() {
-
-    document
-        .getElementById("modal-club")
-        .classList.add("hidden");
-}
-
-// ===================================================================
-// API - EQUIPES
-// ===================================================================
-function creerEquipe() {
-
-    const select =
-        document.getElementById(
-            "equipe-club"
-        );
-
-    select.innerHTML = "";
-
-    data.clubs.forEach(club => {
-
-        const option =
-            document.createElement("option");
-
-        option.value = club.id;
-
-        option.textContent = club.nom;
-
-        select.appendChild(option);
-    });
-
-    document
-        .getElementById("modal-equipe")
-        .classList.remove("hidden");
-}
-
-async function supprimerEquipe(idEquipe) {
-
-    if (!confirm("Supprimer cette équipe ?")) {
-        return;
-    }
-
-    try {
-
-        // Supprimer joueurs liés
-        await fetch(
-            `${SUPABASE_URL}/joueurs?id_equipe=eq.${idEquipe}`,
-            {
-                method: "DELETE",
-
-                headers: {
-                    apikey: SUPABASE_API_KEY,
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
-                }
-            }
-        );
-
-        // Supprimer équipe
-        const response = await fetch(
-            `${SUPABASE_URL}/equipe?id_equipe=eq.${idEquipe}`,
-            {
-                method: "DELETE",
-
-                headers: {
-                    apikey: SUPABASE_API_KEY,
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
-                }
-            }
-        );
-
-        if (!response.ok) {
-
-            console.log(
-                await response.text()
-            );
-
-            alert(
-                "Erreur suppression équipe."
-            );
-
-            return;
-        }
-
-        await rafraichir("equipes");
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(
-            "Erreur suppression équipe."
-        );
-    }
-}
-
-async function creerNouvelleEquipe() {
-
-    const clubId =
-        document.getElementById(
-            "equipe-club"
-        ).value;
-
-    const niveau =
-        document.getElementById(
-            "equipe-niveau"
-        ).value;
-
-    const nom =
-        document.getElementById(
-            "entraineur-nom"
-        ).value.trim();
-
-    const prenom =
-        document.getElementById(
-            "entraineur-prenom"
-        ).value.trim();
-
-    if (
-        !clubId ||
-        !niveau ||
-        !nom ||
-        !prenom
-    ) {
-        alert(
-            "Veuillez remplir tous les champs."
-        );
-        return;
-    }
-
-    try {
-        const nouvelId =
-            Math.floor(
-                1000 +
-                Math.random() * 900000
-            );
-// Création personne
-        await fetch(
-            `${SUPABASE_URL}/personne`,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json",
-
-                    apikey:
-                    SUPABASE_API_KEY,
-
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
-                },
-
-                body: JSON.stringify({
-
-                    id_personne:
-                    nouvelId,
-
-                    nom:
-                    nom,
-
-                    prenom:
-                    prenom
-                })
-            }
-        );
-
-        // =====================================
-        // Création ENTRAINEUR
-        // =====================================
-        await fetch(
-            `${SUPABASE_URL}/entraineur`,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json",
-
-                    apikey:
-                    SUPABASE_API_KEY,
-
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
-                },
-
-                body: JSON.stringify({
-
-                    id_entraineur:
-                    nouvelId
-                })
-            }
-        );
-
-        // =====================================
-        // Création EQUIPE
-        // =====================================
-        const response = await fetch(
-            `${SUPABASE_URL}/equipe`,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json",
-
-                    apikey:
-                    SUPABASE_API_KEY,
-
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
-                },
-
-                body: JSON.stringify({
-
-                    nom_equipe:
-                        `Equipe ${niveau}`,
-
-                    id_niveau:
-                        Number(niveau),
-
-                    id_club:
-                        Number(clubId),
-
-                    id_entraineur:
-                    nouvelId
-                })
-            }
-        );
-
-        if (!response.ok) {
-
-            console.log(
-                await response.text()
-            );
-
-            alert(
-                "Erreur création équipe."
-            );
-
-            return;
-        }
-
-        fermerModalEquipe();
-
-        await chargerDonnees();
-
-        showPage("equipes");
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(
-            "Erreur création équipe."
-        );
-    }
-}
-
-// ===================================================================
-// API - JOUEURS
-// ===================================================================
-function ajouterJoueur() {
-
-    const selectClub =
-        document.getElementById(
-            "joueur-club"
-        );
-
-    const selectEquipe =
-        document.getElementById(
-            "joueur-equipe"
-        );
-
-    selectClub.innerHTML = "";
-    selectEquipe.innerHTML = "";
-
-    data.clubs.forEach(club => {
-
-        const option =
-            document.createElement("option");
-
-        option.value = club.nom;
-
-        option.textContent = club.nom;
-
-        selectClub.appendChild(option);
-    });
-
-    // Charger équipes du premier club
-    chargerEquipesPourJoueur();
-
-    document
-        .getElementById("modal-joueur")
-        .classList.remove("hidden");
-}
-
-async function supprimerJoueur(idJoueur) {
-
-    if (!confirm("Supprimer ce joueur ?")) {
-        return;
-    }
-
-    try {
-
-        const response = await fetch(
-            `${SUPABASE_URL}/joueurs?id_joueur=eq.${idJoueur}`,
-            {
-                method: "DELETE",
-
-                headers: {
-                    apikey:
-                    SUPABASE_API_KEY,
-
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
-                }
-            }
-        );
-
-        if (!response.ok) {
-
-            console.log(
-                await response.text()
-            );
-
-            alert(
-                "Erreur suppression joueur."
-            );
-
-            return;
-        }
-
-        await fetch(
-            `${SUPABASE_URL}/personne?id_personne=eq.${idJoueur}`,
-            {
-                method: "DELETE",
-
-                headers: {
-                    apikey:
-                    SUPABASE_API_KEY,
-
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
-                }
-            }
-        );
-
-        await chargerDonnees();
-
-        showPage("joueurs");
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(
-            "Erreur suppression joueur."
-        );
-    }
+    const content  = document.getElementById("page-content");
+
+    const pages = {
+        dashboard:  () => afficherDashboard(title, subtitle, content),
+        clubs:      () => afficherClubs(title, subtitle, content),
+        equipes:    () => afficherEquipes(title, subtitle, content),
+        joueurs:    () => afficherJoueurs(title, subtitle, content),
+        titulaires: () => afficherTitulaires(title, subtitle, content),
+        classement: () => afficherClassement(title, subtitle, content),
+        matchs:     () => afficherMatchs(title, subtitle, content)
+    };
+
+    if (pages[page]) pages[page]();
 }
 
 async function rafraichir(page) {
@@ -1303,814 +189,843 @@ async function rafraichir(page) {
 }
 
 // ===================================================================
-// UTILITAIRES
+// DASHBOARD
 // ===================================================================
-function afficherPresentationJoueur(joueur) {
-    // Si l'âge n'existe pas dans le JSON, on le calcule ici
-    let age = joueur.age;
+function afficherDashboard(title, subtitle, content) {
+    let nbEquipes = 0, nbJoueurs = 0, nbTitulaires = 0;
 
-    if (
-        age === undefined ||
-        age === null ||
-        age === "" ||
-        age === "undefined"
-    ) {
-        if (joueur.dateNaissance) {
-            const naissance = new Date(joueur.dateNaissance);
-            const aujourdHui = new Date();
-
-            age =
-                aujourdHui.getFullYear() -
-                naissance.getFullYear();
-
-            const mois =
-                aujourdHui.getMonth() -
-                naissance.getMonth();
-
-            if (
-                mois < 0 ||
-                (mois === 0 &&
-                    aujourdHui.getDate() <
-                    naissance.getDate())
-            ) {
-                age--;
-            }
-        } else {
-            age = "?";
-        }
-    }
-
-    const modal = document.createElement("div");
-    modal.className = "modal";
-
-    modal.innerHTML = `
-        <div class="modal-overlay"></div>
-
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>⚽ Présentation du joueur</h2>
-                <button class="modal-close">✕</button>
-            </div>
-
-            <div class="modal-body">
-                <div class="player-profile">
-                    <div class="player-details">
-                        <h3 class="player-name">${joueur.prenom} ${joueur.nom}</h3>
-
-                        <div class="player-info">
-                            <p><strong>Âge :</strong> ${age} ans</p>
-                            <p><strong>Poste :</strong> ${joueur.poste}</p>
-                            <p><strong>Valeur :</strong> ${joueur.prix}</p>
-                            <p><strong>Titulaire :</strong>
-                                ${joueur.titulaire ? "⭐ Oui" : "Non"}
-                            </p>
-                            <p><strong>Club :</strong> ${joueur.club}</p>
-                            <p><strong>Niveau :</strong> ${joueur.niveau}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button class="action-btn secondary-btn">
-                    Fermer
-                </button>
-            </div>
-        </div>
-    `;
-
-    // Fermeture
-    const closeButtons = modal.querySelectorAll(
-        ".modal-close, .secondary-btn, .modal-overlay"
-    );
-
-    closeButtons.forEach(button => {
-        button.addEventListener("click", () => {
-            modal.remove();
+    data.clubs.forEach(club => {
+        nbEquipes += club.equipes.length;
+        club.equipes.forEach(equipe => {
+            nbJoueurs += equipe.joueurs.length;
+            equipe.joueurs.forEach(j => { if (j.titulaire) nbTitulaires++; });
         });
     });
 
-    document.body.appendChild(modal);
+    title.textContent    = "Dashboard";
+    subtitle.textContent = "Vue d'ensemble de votre club";
+
+    content.innerHTML = `
+        <div class="cards grid">
+            <div class="card">
+                <h3>🏟️ Clubs</h3>
+                <p>${data.clubs.length} club(s)</p>
+                <button class="action-btn" onclick="ouvrirModalClub()">➕ Créer un club</button>
+            </div>
+            <div class="card">
+                <h3>👥 Équipes</h3>
+                <p>${nbEquipes} équipe(s)</p>
+                <button class="action-btn" onclick="creerEquipe()">➕ Créer une équipe</button>
+            </div>
+            <div class="card">
+                <h3>⚽ Joueurs</h3>
+                <p>${nbJoueurs} joueur(s)</p>
+                <button class="action-btn" onclick="ajouterJoueur()">➕ Ajouter un joueur</button>
+            </div>
+            <div class="card">
+                <h3>⭐ Titulaires</h3>
+                <p>${nbTitulaires} titulaire(s)</p>
+            </div>
+        </div>
+    `;
 }
 
-function formatDate(date) {
-    if (!date) return "";
+// ===================================================================
+// CLUBS
+// ===================================================================
+function afficherClubs(title, subtitle, content) {
+    title.textContent    = "Clubs";
+    subtitle.textContent = "Gestion des clubs";
 
-    const d = new Date(date);
-    if (isNaN(d)) return date;
+    const rows = data.clubs.map((club, i) => `
+        <tr>
+            <td>${i + 1}</td>
+            <td>${club.nom}</td>
+            <td>${formatDate(club.dateCreation)}</td>
+            <td>${club.equipes.length}</td>
+            <td>
+                <button class="action-btn danger-btn"
+                        onclick="supprimerClub('${escapeJs(club.nom)}')">
+                    🗑️ Supprimer
+                </button>
+            </td>
+        </tr>
+    `).join("");
 
-    return d.toLocaleDateString("fr-FR");
+    content.innerHTML = `
+        <div class="page-actions">
+            <button class="action-btn" onclick="ouvrirModalClub()">➕ Créer un club</button>
+        </div>
+        ${rows === "" ? `
+            <div class="card"><h3>Aucun club</h3><p>Aucun club trouvé.</p></div>
+        ` : `
+            <div class="table-wrapper">
+                <table class="table">
+                    <thead>
+                        <tr><th>#</th><th>Nom</th><th>Date de création</th><th>Équipes</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+        `}
+    `;
 }
 
-function escapeJs(str) {
-    return String(str)
-        .replace(/\\/g, "\\\\")
-        .replace(/'/g, "\\'");
+// ===================================================================
+// EQUIPES
+// ===================================================================
+function afficherEquipes(title, subtitle, content) {
+    title.textContent    = "Équipes";
+    subtitle.textContent = "Gestion des équipes";
+
+    let index = 1;
+    const rows = data.clubs.flatMap(club =>
+        club.equipes.map(equipe => `
+            <tr>
+                <td>${index++}</td>
+                <td>${club.nom}</td>
+                <td>${equipe.niveau}</td>
+                <td>${equipe.entraineur}</td>
+                <td>${equipe.joueurs.length}</td>
+                <td>
+                    <button class="action-btn danger-btn"
+                            onclick="supprimerEquipe(${equipe.id})">
+                        🗑️ Supprimer
+                    </button>
+                </td>
+            </tr>
+        `)
+    ).join("");
+
+    content.innerHTML = `
+        <div class="page-actions">
+            <button class="action-btn" onclick="creerEquipe()">➕ Créer une équipe</button>
+        </div>
+        ${rows === "" ? `
+            <div class="card"><h3>Aucune équipe</h3><p>Aucune équipe trouvée.</p></div>
+        ` : `
+            <div class="table-wrapper">
+                <table class="table">
+                    <thead>
+                        <tr><th>#</th><th>Club</th><th>Niveau</th><th>Entraîneur</th><th>Joueurs</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+        `}
+    `;
+}
+
+// ===================================================================
+// JOUEURS
+// ===================================================================
+function afficherJoueurs(title, subtitle, content) {
+    title.textContent    = "Joueurs";
+    subtitle.textContent = "Gestion des joueurs";
+
+    const cards = data.clubs.flatMap(club =>
+        club.equipes.flatMap(equipe =>
+            equipe.joueurs.map(joueur => {
+                const joueurData = {
+                    nom: joueur.nom, prenom: joueur.prenom,
+                    age: joueur.age, poste: joueur.poste,
+                    prix: formatPrix(joueur.prix), titulaire: joueur.titulaire,
+                    club: club.nom, niveau: equipe.niveau,
+                    dateNaissance: joueur.dateNaissance
+                };
+                return `
+                    <div class="card joueur-card"
+                         data-nom="${joueur.prenom} ${joueur.nom}"
+                         data-equipe="${club.nom} - ${equipe.niveau}">
+                        <h3>${joueur.prenom} ${joueur.nom}</h3>
+                        <p><strong>Âge :</strong> ${joueur.age} ans</p>
+                        <p><strong>Poste :</strong> ${joueur.poste}</p>
+                        <div style="margin-top:20px;">
+                            <button class="action-btn"
+                                onclick='afficherPresentationJoueur(${JSON.stringify(joueurData)})'>
+                                👁️ Présentation
+                            </button>
+                            <button class="action-btn danger-btn"
+                                onclick="supprimerJoueur(${joueur.id})">
+                                🗑️ Supprimer
+                            </button>
+                        </div>
+                    </div>
+                `;
+            })
+        )
+    ).join("");
+
+    const optionsEquipes = data.clubs.flatMap(club =>
+        club.equipes.map(equipe => `
+            <option value="${club.nom} - ${equipe.niveau}">
+                ${club.nom} - ${equipe.niveau}
+            </option>
+        `)
+    ).join("");
+
+    content.innerHTML = `
+        <div class="joueurs-filtres">
+            <input type="text" id="recherche-joueur"
+                   placeholder="🔎 Rechercher un joueur..."
+                   oninput="filtrerJoueurs()">
+            <select id="filtre-equipe" onchange="filtrerJoueurs()">
+                <option value="">Toutes les équipes</option>
+                ${optionsEquipes}
+            </select>
+        </div>
+        <div class="page-actions">
+            <button class="action-btn" onclick="ajouterJoueur()">➕ Ajouter un joueur</button>
+        </div>
+        ${cards === "" ? `
+            <div class="card"><h3>Aucun joueur</h3><p>Aucun joueur trouvé.</p></div>
+        ` : `
+            <div class="cards grid">${cards}</div>
+        `}
+    `;
+}
+
+function filtrerJoueurs() {
+    const recherche = document.getElementById("recherche-joueur").value.toLowerCase();
+    const equipe    = document.getElementById("filtre-equipe").value.toLowerCase();
+
+    document.querySelectorAll(".joueur-card").forEach(card => {
+        const matchNom    = card.dataset.nom.toLowerCase().includes(recherche);
+        const matchEquipe = equipe === "" || card.dataset.equipe.toLowerCase().includes(equipe);
+        card.style.display = (matchNom && matchEquipe) ? "block" : "none";
+    });
+}
+
+// ===================================================================
+// TITULAIRES
+// ===================================================================
+function afficherTitulaires(title, subtitle, content) {
+    title.textContent    = "Titulaires";
+    subtitle.textContent = "Joueurs titulaires par équipe";
+
+    const options = [
+        '<option value="">Toutes les équipes</option>',
+        ...data.clubs.flatMap(club =>
+            club.equipes.map(equipe => {
+                const val = `${club.nom}|${equipe.niveau}`;
+                return `<option value="${escapeJs(val)}">${club.nom} - ${equipe.niveau}</option>`;
+            })
+        )
+    ].join("");
+
+    content.innerHTML = `
+        <div class="card">
+            <div class="form-group">
+                <label for="filtre-equipe">Rechercher les titulaires par équipe</label>
+                <select id="filtre-equipe" onchange="filtrerTitulairesParEquipe()">
+                    ${options}
+                </select>
+            </div>
+        </div>
+        <div id="titulaires-resultats" class="cards grid"></div>
+    `;
+
+    filtrerTitulairesParEquipe();
+}
+
+function filtrerTitulairesParEquipe() {
+    const select    = document.getElementById("filtre-equipe");
+    const container = document.getElementById("titulaires-resultats");
+    if (!select || !container) return;
+
+    const filtre = select.value;
+    const cards  = data.clubs.flatMap(club =>
+        club.equipes
+            .filter(equipe => !filtre || `${club.nom}|${equipe.niveau}` === filtre)
+            .flatMap(equipe => {
+                const titulaires = equipe.joueurs.filter(j => j.titulaire === true);
+                if (titulaires.length === 0) return [];
+                const liste = titulaires.map(j => `
+                    <p>⚽ <strong>${j.prenom} ${j.nom}</strong><br>
+                    ${j.poste} • ${j.age} ans • ${formatPrix(j.prix)}</p>
+                `).join("");
+                return [`
+                    <div class="card">
+                        <h3>🏟️ ${club.nom}</h3>
+                        <p><strong>Niveau :</strong> ${equipe.niveau}</p>
+                        <div style="margin-top:12px;">${liste}</div>
+                    </div>
+                `];
+            })
+    ).join("");
+
+    container.innerHTML = cards || `
+        <div class="card">
+            <h3>Aucun titulaire</h3>
+            <p>Aucun joueur titulaire trouvé pour cette équipe.</p>
+        </div>
+    `;
+}
+
+// ===================================================================
+// CLASSEMENT — filtré par niveau
+// ===================================================================
+async function afficherClassement(title, subtitle, content) {
+    title.textContent    = "Classement";
+    subtitle.textContent = "Classement par niveau";
+
+    // Sélecteur de niveau
+    const niveaux = getNiveauxDisponibles();
+    const optionsNiveau = niveaux.map(([id, nom]) =>
+        `<option value="${id}">${nom}</option>`
+    ).join("");
+
+    content.innerHTML = `
+        <div class="page-actions" style="margin-bottom:16px;">
+            <select id="classement-niveau" onchange="rafraichirClassement()" style="padding:8px 12px;border-radius:6px;border:1px solid #ddd;font-size:14px;">
+                ${optionsNiveau}
+            </select>
+        </div>
+        <div id="classement-contenu">
+            <div class="card"><p>Chargement...</p></div>
+        </div>
+    `;
+
+    await chargerTableauClassement();
+}
+
+async function rafraichirClassement() {
+    await chargerTableauClassement();
+}
+
+async function chargerTableauClassement() {
+    const select = document.getElementById("classement-niveau");
+    const container = document.getElementById("classement-contenu");
+    if (!select || !container) return;
+
+    const idNiveau = parseInt(select.value);
+    const nomNiveau = NIVEAUX[idNiveau] || "Inconnu";
+
+    // Récupère les clubs qui ont une équipe dans ce niveau
+    const clubsDuNiveau = new Set();
+    data.clubs.forEach(club => {
+        club.equipes.forEach(equipe => {
+            if (equipe.idNiveau === idNiveau) clubsDuNiveau.add(club.nom);
+        });
+    });
+
+    try {
+        const classement = await api(
+            "/vue_classement?select=*&order=points.desc,difference.desc",
+            { cache: "no-store" }
+        );
+
+        // Filtre : on ne garde que les clubs du niveau sélectionné
+        const filtre = classement.filter(row => clubsDuNiveau.has(row.nom_club));
+
+        if (filtre.length === 0) {
+            container.innerHTML = `
+                <div class="card">
+                    <h3>Aucun résultat</h3>
+                    <p>Aucun match enregistré pour le niveau <strong>${nomNiveau}</strong>.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const rows = filtre.map((club, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td><strong>${club.nom_club}</strong></td>
+                <td>${club.points}</td>
+                <td>${club.victoires}</td>
+                <td>${club.nuls}</td>
+                <td>${club.defaites}</td>
+                <td>${club.buts_pour}</td>
+                <td>${club.buts_contre}</td>
+                <td>${club.difference}</td>
+            </tr>
+        `).join("");
+
+        container.innerHTML = `
+            <div class="table-wrapper">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>#</th><th>Club</th><th>PTS</th>
+                            <th>V</th><th>N</th><th>D</th>
+                            <th>BP</th><th>BC</th><th>Diff</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+        `;
+    } catch (error) {
+        console.error(error);
+        container.innerHTML = `
+            <div class="card">❌ Impossible de charger le classement<br>
+            <small style="color:#888">${error.message}</small></div>
+        `;
+    }
+}
+
+// ===================================================================
+// MATCHS — affichage filtré par niveau
+// ===================================================================
+async function afficherMatchs(title, subtitle, content) {
+    title.textContent    = "Matchs";
+    subtitle.textContent = "Gestion des matchs";
+
+    const niveaux = getNiveauxDisponibles();
+    const optionsNiveau = niveaux.map(([id, nom]) =>
+        `<option value="${id}">${nom}</option>`
+    ).join("");
+
+    content.innerHTML = `
+        <div class="page-actions" style="gap:12px;">
+            <select id="matchs-niveau" onchange="rafraichirMatchs()" style="padding:8px 12px;border-radius:6px;border:1px solid #ddd;font-size:14px;">
+                ${optionsNiveau}
+            </select>
+            <button class="action-btn" onclick="ouvrirModalMatch()">➕ Créer un match</button>
+        </div>
+        <div id="matchs-contenu">
+            <div class="card"><p>Chargement...</p></div>
+        </div>
+    `;
+
+    await chargerTableauMatchs();
+}
+
+async function rafraichirMatchs() {
+    await chargerTableauMatchs();
+}
+
+async function chargerTableauMatchs() {
+    const select    = document.getElementById("matchs-niveau");
+    const container = document.getElementById("matchs-contenu");
+    if (!select || !container) return;
+
+    const idNiveau = parseInt(select.value);
+
+    // Map id_equipe → club, pour les équipes du niveau sélectionné
+    const equipeToClub = {};
+    data.clubs.forEach(club => {
+        club.equipes.forEach(equipe => {
+            if (equipe.idNiveau === idNiveau) {
+                equipeToClub[equipe.id] = club.nom;
+            }
+        });
+    });
+
+    const equipesNiveau = new Set(Object.keys(equipeToClub).map(Number));
+
+    try {
+        const matchs = await api("/matchs?select=*&order=id_match.desc");
+
+        // Filtre : au moins une des deux équipes appartient au niveau
+        const filtres = matchs.filter(m =>
+            equipesNiveau.has(m.equipe_domicile) || equipesNiveau.has(m.equipe_exterieur)
+        );
+
+        if (filtres.length === 0) {
+            container.innerHTML = `
+                <div class="card">
+                    <h3>Aucun match</h3>
+                    <p>Aucun match enregistré pour ce niveau.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const rows = filtres.map(match => {
+            const dom = equipeToClub[match.equipe_domicile] || "-";
+            const ext = equipeToClub[match.equipe_exterieur] || "-";
+            return `
+                <tr>
+                    <td><strong>${dom}</strong></td>
+                    <td style="font-weight:bold;text-align:center;font-size:18px;">
+                        ${match.score_domicile} - ${match.score_exterieur}
+                    </td>
+                    <td><strong>${ext}</strong></td>
+                </tr>
+            `;
+        }).join("");
+
+        container.innerHTML = `
+            <div class="table-wrapper">
+                <table class="table">
+                    <thead>
+                        <tr><th>Domicile</th><th>Score</th><th>Extérieur</th></tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+        `;
+    } catch (error) {
+        console.error(error);
+        container.innerHTML = `
+            <div class="card">❌ Impossible de charger les matchs<br>
+            <small style="color:#888">${error.message}</small></div>
+        `;
+    }
+}
+
+// ===================================================================
+// MODAL MATCH
+// ===================================================================
+function ouvrirModalMatch() {
+    document.getElementById("modal-match").style.display = "flex";
+    chargerNiveauxMatch();
+}
+
+function fermerModalMatch() {
+    document.getElementById("modal-match").style.display = "none";
+}
+
+function chargerNiveauxMatch() {
+    const niveauSelect = document.getElementById("niveau");
+    const niveaux = getNiveauxDisponibles();
+
+    niveauSelect.innerHTML = niveaux.map(([id, nom]) =>
+        `<option value="${id}">${nom}</option>`
+    ).join("");
+
+    chargerEquipesMatch();
+}
+
+function chargerEquipesMatch() {
+    const idNiveau  = parseInt(document.getElementById("niveau").value);
+    const domicile  = document.getElementById("domicile");
+    const exterieur = document.getElementById("exterieur");
+
+    const options = data.clubs.flatMap(club =>
+        club.equipes
+            .filter(equipe => equipe.idNiveau === idNiveau)
+            .map(equipe => `<option value="${equipe.id}">${club.nom}</option>`)
+    ).join("");
+
+    domicile.innerHTML  = options;
+    exterieur.innerHTML = options;
+}
+
+async function ajouterMatch() {
+    const equipe_domicile  = parseInt(document.getElementById("domicile").value);
+    const equipe_exterieur = parseInt(document.getElementById("exterieur").value);
+    const score_domicile   = parseInt(document.getElementById("scoreDom").value);
+    const score_exterieur  = parseInt(document.getElementById("scoreExt").value);
+
+    if (isNaN(equipe_domicile) || isNaN(equipe_exterieur)) {
+        alert("Veuillez sélectionner les deux équipes.");
+        return;
+    }
+    if (isNaN(score_domicile) || isNaN(score_exterieur)) {
+        alert("Veuillez saisir les scores.");
+        return;
+    }
+    if (equipe_domicile === equipe_exterieur) {
+        alert("Les équipes doivent être différentes.");
+        return;
+    }
+
+    try {
+        await api("/matchs", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Prefer: "return=minimal"
+            },
+            body: JSON.stringify({
+                equipe_domicile,
+                equipe_exterieur,
+                score_domicile,
+                score_exterieur,
+                date_match: new Date().toISOString().split("T")[0]
+            })
+        });
+
+        fermerModalMatch();
+        await chargerDonnees();
+        // Rafraîchit le tableau du niveau actuellement sélectionné dans matchs
+        await chargerTableauMatchs();
+        // Met aussi à jour le classement si visible
+        if (document.getElementById("classement-contenu")) {
+            await chargerTableauClassement();
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Erreur ajout match : " + error.message);
+    }
+}
+
+// ===================================================================
+// API — CLUBS
+// ===================================================================
+function ouvrirModalClub() {
+    document.getElementById("modal-club").classList.remove("hidden");
+}
+
+function fermerModalClub() {
+    document.getElementById("modal-club").classList.add("hidden");
+}
+
+async function creerClub() {
+    const nom         = document.getElementById("club-nom").value.trim();
+    const dateCreation = document.getElementById("club-date").value;
+
+    if (!nom || !dateCreation) {
+        afficherErreurModal("Veuillez remplir tous les champs.");
+        return;
+    }
+
+    try {
+        await api("/club", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nom_club: nom, date_creation: dateCreation })
+        });
+
+        document.getElementById("club-nom").value  = "";
+        document.getElementById("club-date").value = "";
+        fermerModalClub();
+        await rafraichir("clubs");
+    } catch (error) {
+        console.error(error);
+        afficherErreurModal("Erreur création club.");
+    }
+}
+
+async function supprimerClub(nom) {
+    if (!confirm(`Supprimer le club "${nom}" ?`)) return;
+
+    const club = data.clubs.find(c => c.nom === nom);
+    if (!club) { alert("Club introuvable"); return; }
+
+    try {
+        // Supprimer joueurs → équipes → club (ordre respecté pour les FK)
+        await api(`/joueurs?id_club=eq.${club.id}`, { method: "DELETE" });
+        await api(`/equipe?id_club=eq.${club.id}`,  { method: "DELETE" });
+        await api(`/club?id_club=eq.${club.id}`,    { method: "DELETE" });
+        await rafraichir("clubs");
+    } catch (error) {
+        console.error(error);
+        alert("Erreur suppression club.");
+    }
+}
+
+// ===================================================================
+// API — EQUIPES
+// ===================================================================
+function creerEquipe() {
+    const select = document.getElementById("equipe-club");
+    select.innerHTML = data.clubs.map(club =>
+        `<option value="${club.id}">${club.nom}</option>`
+    ).join("");
+    document.getElementById("modal-equipe").classList.remove("hidden");
 }
 
 function fermerModalEquipe() {
     document.getElementById("modal-equipe").classList.add("hidden");
 }
 
+async function creerNouvelleEquipe() {
+    const clubId = document.getElementById("equipe-club").value;
+    const niveau = document.getElementById("equipe-niveau").value;
+    const nom    = document.getElementById("entraineur-nom").value.trim();
+    const prenom = document.getElementById("entraineur-prenom").value.trim();
 
-function afficherErreurModal(message) {
-    let zoneErreur = document.getElementById(
-        "modal-error"
-    );
-
-    if (!zoneErreur) {
-        zoneErreur = document.createElement("div");
-        zoneErreur.id = "modal-error";
-        zoneErreur.className = "modal-error";
-
-        const modalBody = document.querySelector(
-            "#modal-equipe .modal-body"
-        );
-
-        if (modalBody) {
-            modalBody.prepend(zoneErreur);
-        }
-    }
-
-    zoneErreur.textContent = message;
-}
-
-function chargerEquipesPourJoueur() {
-    const clubNom =
-        document.getElementById("joueur-club").value;
-
-    const selectEquipe =
-        document.getElementById("joueur-equipe");
-
-    selectEquipe.innerHTML = "";
-
-    const club = data.clubs.find(c => c.nom === clubNom);
-
-    if (!club || !club.equipes || club.equipes.length === 0) {
+    if (!clubId || !niveau || !nom || !prenom) {
+        afficherErreurModal("Veuillez remplir tous les champs.");
         return;
     }
 
-    club.equipes.forEach(equipe => {
-        const option = document.createElement("option");
-        option.value = equipe.niveau;
-        option.textContent = equipe.niveau;
-        selectEquipe.appendChild(option);
-    });
+    try {
+        const nouvelId = Math.floor(1000 + Math.random() * 900000);
+
+        await api("/personne", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id_personne: nouvelId, nom, prenom })
+        });
+
+        await api("/entraineur", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id_entraineur: nouvelId })
+        });
+
+        await api("/equipe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                nom_equipe: `Equipe ${NIVEAUX[niveau] || niveau}`,
+                id_niveau: Number(niveau),
+                id_club: Number(clubId),
+                id_entraineur: nouvelId
+            })
+        });
+
+        fermerModalEquipe();
+        await rafraichir("equipes");
+    } catch (error) {
+        console.error(error);
+        afficherErreurModal("Erreur création équipe.");
+    }
+}
+
+async function supprimerEquipe(idEquipe) {
+    if (!confirm("Supprimer cette équipe ?")) return;
+
+    try {
+        await api(`/joueurs?id_equipe=eq.${idEquipe}`, { method: "DELETE" });
+        await api(`/equipe?id_equipe=eq.${idEquipe}`,  { method: "DELETE" });
+        await rafraichir("equipes");
+    } catch (error) {
+        console.error(error);
+        alert("Erreur suppression équipe.");
+    }
+}
+
+// ===================================================================
+// API — JOUEURS
+// ===================================================================
+function ajouterJoueur() {
+    const selectClub   = document.getElementById("joueur-club");
+    const selectEquipe = document.getElementById("joueur-equipe");
+
+    selectClub.innerHTML = data.clubs.map(club =>
+        `<option value="${club.nom}">${club.nom}</option>`
+    ).join("");
+    selectEquipe.innerHTML = "";
+
+    chargerEquipesPourJoueur();
+    document.getElementById("modal-joueur").classList.remove("hidden");
 }
 
 function fermerModalJoueur() {
     document.getElementById("modal-joueur").classList.add("hidden");
 }
 
+function chargerEquipesPourJoueur() {
+    const clubNom     = document.getElementById("joueur-club").value;
+    const selectEquipe = document.getElementById("joueur-equipe");
+    const club        = data.clubs.find(c => c.nom === clubNom);
+
+    selectEquipe.innerHTML = (club?.equipes || []).map(equipe =>
+        `<option value="${equipe.niveau}">${equipe.niveau}</option>`
+    ).join("");
+}
+
 async function soumettreAjoutJoueur() {
+    const clubNom      = document.getElementById("joueur-club").value;
+    const niveau       = document.getElementById("joueur-equipe").value;
+    const nom          = document.getElementById("joueur-nom").value.trim();
+    const prenom       = document.getElementById("joueur-prenom").value.trim();
+    const dateNaissance = document.getElementById("joueur-date-naissance").value;
+    const poste        = document.getElementById("joueur-poste").value;
+    const prix         = document.getElementById("joueur-prix").value;
+    const titulaire    = document.getElementById("joueur-titulaire").checked;
 
-    const clubNom =
-        document.getElementById(
-            "joueur-club"
-        ).value;
+    const club   = data.clubs.find(c => c.nom === clubNom);
+    const equipe = club?.equipes.find(e => e.niveau === niveau);
 
-    const niveau =
-        document.getElementById(
-            "joueur-equipe"
-        ).value;
-
-    const nom =
-        document.getElementById(
-            "joueur-nom"
-        ).value.trim();
-
-    const prenom =
-        document.getElementById(
-            "joueur-prenom"
-        ).value.trim();
-
-    const dateNaissance =
-        document.getElementById(
-            "joueur-date-naissance"
-        ).value;
-
-    const poste =
-        document.getElementById(
-            "joueur-poste"
-        ).value;
-
-    const prix =
-        document.getElementById(
-            "joueur-prix"
-        ).value;
-
-    const titulaire =
-        document.getElementById(
-            "joueur-titulaire"
-        ).checked;
-
-    const club = data.clubs.find(
-        c => c.nom === clubNom
-    );
-
-    if (!club) {
-        alert("Club introuvable");
-        return;
-    }
-
-    const equipe = club.equipes.find(
-        e => e.niveau === niveau
-    );
-
-    if (!equipe) {
-        alert("Équipe introuvable");
+    if (!club)   { alert("Club introuvable");   return; }
+    if (!equipe) { alert("Équipe introuvable"); return; }
+    if (!nom || !prenom || !dateNaissance || !poste || !prix) {
+        alert("Veuillez remplir tous les champs.");
         return;
     }
 
     try {
+        const nouvelId = Math.floor(1000 + Math.random() * 900000);
 
-        const nouvelId =
-            Math.floor(
-                1000 +
-                Math.random() * 900000
-            );
+        await api("/personne", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id_personne: nouvelId, nom, prenom })
+        });
 
-        // =========================
-        // Création PERSONNE
-        // =========================
-        await fetch(
-            `${SUPABASE_URL}/personne`,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json",
-
-                    apikey:
-                    SUPABASE_API_KEY,
-
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
-                },
-
-                body: JSON.stringify({
-
-                    id_personne:
-                    nouvelId,
-
-                    nom:
-                    nom,
-
-                    prenom:
-                    prenom
-                })
-            }
-        );
-
-        // =========================
-        // Création JOUEUR
-        // =========================
-        const response = await fetch(
-            `${SUPABASE_URL}/joueurs`,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json",
-
-                    apikey:
-                    SUPABASE_API_KEY,
-
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
-                },
-
-                body: JSON.stringify({
-
-                    id_joueur:
-                    nouvelId,
-
-                    prix:
-                        Number(prix),
-
-                    date_naissance:
-                    dateNaissance,
-
-                    titulaire:
-                    titulaire,
-
-                    id_poste:
-                        Number(poste),
-
-                    id_club:
-                        Number(club.id),
-
-                    id_equipe:
-                        Number(equipe.id)
-                })
-            }
-        );
-
-        if (!response.ok) {
-
-            console.log(
-                await response.text()
-            );
-
-            alert(
-                "Erreur création joueur."
-            );
-
-            return;
-        }
+        await api("/joueurs", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                id_joueur: nouvelId,
+                prix: Number(prix),
+                date_naissance: dateNaissance,
+                titulaire,
+                id_poste: Number(poste),
+                id_club: Number(club.id),
+                id_equipe: Number(equipe.id)
+            })
+        });
 
         fermerModalJoueur();
-
-        await chargerDonnees();
-
-        showPage("joueurs");
-
+        await rafraichir("joueurs");
     } catch (error) {
-
         console.error(error);
-
-        alert(
-            "Erreur ajout joueur."
-        );
+        alert("Erreur ajout joueur : " + error.message);
     }
 }
 
-function calculerAge(dateNaissance) {
-    if (!dateNaissance) {
-        return "?";
-    }
+async function supprimerJoueur(idJoueur) {
+    if (!confirm("Supprimer ce joueur ?")) return;
 
-    const naissance = new Date(dateNaissance);
-
-    if (isNaN(naissance)) {
-        return "?";
-    }
-
-    const aujourdHui = new Date();
-
-    let age =
-        aujourdHui.getFullYear() -
-        naissance.getFullYear();
-
-    const mois =
-        aujourdHui.getMonth() -
-        naissance.getMonth();
-
-    if (
-        mois < 0 ||
-        (mois === 0 &&
-            aujourdHui.getDate() < naissance.getDate())
-    ) {
-        age--;
-    }
-
-    return age;
-}
-
-function filtrerJoueurs() {
-    const recherche = document
-        .getElementById("recherche-joueur")
-        .value
-        .toLowerCase();
-
-    const equipe = document
-        .getElementById("filtre-equipe")
-        .value
-        .toLowerCase();
-
-    const cards = document.querySelectorAll(".joueur-card");
-
-    cards.forEach(card => {
-        const nom = card.dataset.nom.toLowerCase();
-        const equipeNom = card.dataset.equipe.toLowerCase();
-
-        const matchNom = nom.includes(recherche);
-        const matchEquipe =
-            equipe === "" || equipeNom.includes(equipe);
-
-        if (matchNom && matchEquipe) {
-            card.style.display = "block";
-        } else {
-            card.style.display = "none";
-        }
-    });
-}
-
-async function afficherClassement(
-    title,
-    subtitle,
-    content
-) {
-    title.textContent = "Classement";
-
-    subtitle.textContent =
-        "Classement du championnat";
     try {
+        await api(`/joueurs?id_joueur=eq.${idJoueur}`,  { method: "DELETE" });
+        await api(`/personne?id_personne=eq.${idJoueur}`, { method: "DELETE" });
+        await rafraichir("joueurs");
+    } catch (error) {
+        console.error(error);
+        alert("Erreur suppression joueur.");
+    }
+}
 
-        const response = await fetch(
-            "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/vue_classement?select=*&order=points.desc,difference.desc"
-            + "&apikey=" + SUPABASE_API_KEY,
-            {
-                cache: "no-store"
-            }
-        );
-
-        const classement =
-            await response.json();
-
-        if (classement.length === 0) {
-            content.innerHTML = `
-                <div class="card">
-                    <h3>Aucun resultat</h3>
-                    <p>Aucun match enregistre pour le moment.</p>
+// ===================================================================
+// PRÉSENTATION JOUEUR
+// ===================================================================
+function afficherPresentationJoueur(joueur) {
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    modal.innerHTML = `
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚽ Présentation du joueur</h2>
+                <button class="modal-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="player-profile">
+                    <div class="player-details">
+                        <h3 class="player-name">${joueur.prenom} ${joueur.nom}</h3>
+                        <div class="player-info">
+                            <p><strong>Âge :</strong> ${joueur.age} ans</p>
+                            <p><strong>Poste :</strong> ${joueur.poste}</p>
+                            <p><strong>Valeur :</strong> ${joueur.prix}</p>
+                            <p><strong>Titulaire :</strong> ${joueur.titulaire ? "⭐ Oui" : "Non"}</p>
+                            <p><strong>Club :</strong> ${joueur.club}</p>
+                            <p><strong>Niveau :</strong> ${joueur.niveau}</p>
+                        </div>
+                    </div>
                 </div>
-            `;
-            return;
-        }
-
-        let html = `
-            <div class="table-wrapper">
-
-                <table class="table">
-
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Club</th>
-                            <th>PTS</th>
-                            <th>V</th>
-                            <th>N</th>
-                            <th>D</th>
-                            <th>BP</th>
-                            <th>BC</th>
-                            <th>Diff</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-        `;
-
-        classement.forEach((club, index) => {
-
-            html += `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td><strong>${club.nom_club}</strong></td>
-                    <td>${club.points}</td>
-                    <td>${club.victoires}</td>
-                    <td>${club.nuls}</td>
-                    <td>${club.defaites}</td>
-                    <td>${club.buts_pour}</td>
-                    <td>${club.buts_contre}</td>
-                    <td>${club.difference}</td>
-                </tr>
-            `;
-        });
-
-        html += `
-                    </tbody>
-
-                </table>
-
             </div>
-        `;
-
-        content.innerHTML = html;
-
-    } catch (error) {
-
-        console.error(error);
-
-        content.innerHTML = `
-            <div class="card">
-                ❌ Impossible de charger le classement<br>
-                <small style="color:#888">${error.message}</small>
+            <div class="modal-footer">
+                <button class="action-btn secondary-btn">Fermer</button>
             </div>
-        `;
-    }
-}
-
-async function ajouterMatch() {
-
-    const equipe_domicile =
-        parseInt(
-            document.getElementById("domicile").value
-        );
-
-    const equipe_exterieur =
-        parseInt(
-            document.getElementById("exterieur").value
-        );
-
-    const score_domicile =
-        parseInt(
-            document.getElementById("scoreDom").value
-        );
-
-    const score_exterieur =
-        parseInt(
-            document.getElementById("scoreExt").value
-        );
-
-    if (
-        isNaN(equipe_domicile) ||
-        isNaN(equipe_exterieur)
-    ) {
-        alert("Veuillez remplir tous les champs");
-        return;
-    }
-
-    if (equipe_domicile === equipe_exterieur) {
-        alert("Les équipes doivent être différentes");
-        return;
-    }
-
-    try {
-
-        const response = await fetch(
-            `${SUPABASE_URL}/matchs`,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json",
-
-                    apikey:
-                    SUPABASE_API_KEY,
-
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`,
-
-                    Prefer:
-                        "return=minimal"
-                },
-
-                body: JSON.stringify({
-
-                    equipe_domicile:
-                    equipe_domicile,
-
-                    equipe_exterieur:
-                    equipe_exterieur,
-
-                    score_domicile:
-                    score_domicile,
-
-                    score_exterieur:
-                    score_exterieur,
-
-                    date_match:
-                        new Date()
-                            .toISOString()
-                            .split("T")[0]
-                })
-            }
-        );
-
-        if (!response.ok) {
-
-            console.log(
-                await response.text()
-            );
-
-            alert(
-                "Erreur création match"
-            );
-
-            return;
-        }
-
-        fermerModalMatch();
-
-        await chargerDonnees();
-
-        const title =
-            document.getElementById("page-title");
-
-        const subtitle =
-            document.getElementById("page-subtitle");
-
-        const content =
-            document.getElementById("page-content");
-
-        afficherMatchs(
-            title,
-            subtitle,
-            content
-        );
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(
-            "Erreur ajout match"
-        );
-    }
-}
-
-async function afficherMatchs(title, subtitle, content) {
-
-    title.textContent = "Matchs";
-    subtitle.textContent = "Gestion des matchs";
-
-    await chargerDonnees();
-
-    const response = await fetch(
-        `${SUPABASE_URL}/matchs?select=*&order=id_match.desc`,
-        {
-            headers: {
-                apikey: SUPABASE_API_KEY,
-                Authorization: `Bearer ${SUPABASE_API_KEY}`
-            }
-        }
-    );
-
-    const matchs = await response.json();
-
-    const equipesResponse = await fetch(
-        `${SUPABASE_URL}/equipe?select=id_equipe,id_club`,
-        {
-            headers: {
-                apikey: SUPABASE_API_KEY,
-                Authorization: `Bearer ${SUPABASE_API_KEY}`
-            }
-        }
-    );
-
-    const equipes = await equipesResponse.json();
-
-    const equipeToClub = {};
-
-    equipes.forEach(equipe => {
-
-        const club = data.clubs.find(
-            c => c.id === equipe.id_club
-        );
-
-        equipeToClub[equipe.id_equipe] = {
-
-            nomClub: club?.nom || "-"
-
-        };
-
-    });
-
-    let rows = "";
-
-    if (matchs.length === 0) {
-
-        rows = `
-            <tr>
-                <td colspan="3"
-                    style="text-align:center;color:#888;">
-    
-                    Aucun match enregistré
-    
-                </td>
-            </tr>
-        `;
-    }
-
-    matchs.forEach(match => {
-
-        const domicile =
-            equipeToClub[match.equipe_domicile];
-
-        const exterieur =
-            equipeToClub[match.equipe_exterieur];
-
-        rows += `
-            <tr>
-        
-                <td>
-                    <strong>${domicile?.nomClub || "-"}</strong>
-                </td>
-        
-                <td style="font-weight:bold;
-                           text-align:center;
-                           font-size:18px;">
-        
-                    ${match.score_domicile}
-                    -
-                    ${match.score_exterieur}
-        
-                </td>
-        
-                <td>
-                    <strong>${exterieur?.nomClub || "-"}</strong>
-                </td>
-        
-            </tr>
-        `;
-
-    });
-
-    content.innerHTML = `
-        <div class="page-actions">
-
-            <button class="action-btn"
-                    onclick="ouvrirModalMatch()">
-
-                ➕ Créer un match
-
-            </button>
-
         </div>
-
-        <table class="table">
-
-            <thead>
-                <tr>
-                    <th>Domicile</th>
-                    <th>Score</th>
-                    <th>Extérieur</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                ${rows}
-            </tbody>
-
-        </table>
     `;
+
+    modal.querySelectorAll(".modal-close, .secondary-btn, .modal-overlay")
+        .forEach(btn => btn.addEventListener("click", () => modal.remove()));
+
+    document.body.appendChild(modal);
 }
 
-function ouvrirModalMatch() {
-
-    document.getElementById("modal-match")
-        .style.display = "flex";
-
-    chargerNiveauxMatch();
-}
-
-function fermerModalMatch() {
-
-    document.getElementById("modal-match")
-        .style.display = "none";
-}
-
-function chargerNiveauxMatch() {
-
-    const niveauSelect =
-        document.getElementById("niveau");
-
-    const niveaux = new Set();
-
-    data.clubs.forEach(club => {
-
-        club.equipes.forEach(equipe => {
-
-            niveaux.add(equipe.niveau);
-
-        });
-    });
-
-    niveauSelect.innerHTML = "";
-
-    niveaux.forEach(niveau => {
-
-        niveauSelect.innerHTML += `
-            <option value="${niveau}">
-                ${niveau}
-            </option>
-        `;
-    });
-
-    chargerEquipesMatch();
-}
-
-function chargerEquipesMatch() {
-
-    const niveau =
-        document.getElementById("niveau").value;
-
-    const domicile =
-        document.getElementById("domicile");
-
-    const exterieur =
-        document.getElementById("exterieur");
-
-    let options = "";
-
-    data.clubs.forEach(club => {
-
-        club.equipes.forEach(equipe => {
-
-            if (equipe.niveau === niveau) {
-
-                options += `
-                    <option value="${equipe.id}">
-                        ${club.nom}
-                    </option>
-                `;
-            }
-        });
-    });
-
-    domicile.innerHTML = options;
-    exterieur.innerHTML = options;
+// ===================================================================
+// ERREUR MODALE
+// ===================================================================
+function afficherErreurModal(message) {
+    let zone = document.getElementById("modal-error");
+    if (!zone) {
+        zone = document.createElement("div");
+        zone.id = "modal-error";
+        zone.className = "modal-error";
+        const body = document.querySelector("#modal-equipe .modal-body");
+        if (body) body.prepend(zone);
+    }
+    zone.textContent = message;
 }
