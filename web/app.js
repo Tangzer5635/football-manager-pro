@@ -533,8 +533,10 @@ function afficherJoueurs(title, subtitle, content) {
                 };
 
                 cards += `
-                    <div class="card">
-                        <h3>⚽ ${joueur.prenom} ${joueur.nom}</h3>
+                    <div class="card joueur-card"
+                         data-nom="${joueur.prenom} ${joueur.nom}"
+                         data-equipe="${club.nom} - ${equipe.niveau}">
+                        <h3>${joueur.prenom} ${joueur.nom}</h3>
 
                         <div style="margin-top: 20px;">
                             <button class="action-btn"
@@ -554,35 +556,6 @@ function afficherJoueurs(title, subtitle, content) {
     });
 
     content.innerHTML = `
-
-    <div class="joueurs-filtres">
-
-        <input
-            type="text"
-            id="recherche-joueur"
-            placeholder="🔎 Rechercher un joueur..."
-            oninput="filtrerJoueurs()"
-        >
-
-        <select id="filtre-equipe"
-                onchange="filtrerJoueurs()">
-
-            <option value="">
-                Toutes les équipes
-            </option>
-
-            ${data.clubs.flatMap(club =>
-        club.equipes.map(equipe => `
-                    <option value="${club.nom} - ${equipe.niveau}">
-                        ${club.nom} - ${equipe.niveau}
-                    </option>
-                `)
-    ).join("")}
-
-        </select>
-
-    </div>
-
     <div class="page-actions">
         <button class="action-btn" onclick="ajouterJoueur()">
             ➕ Ajouter un joueur
@@ -730,7 +703,9 @@ function filtrerTitulairesParEquipe() {
             }).join("");
 
             cards += `
-                <div class="card">
+                <div class="card joueur-card"
+                     data-nom="${joueur.prenom} ${joueur.nom}"
+                     data-equipe="${club.nom} - ${equipe.niveau}">
                     <h3>🏟️ ${club.nom}</h3>
                     <p><strong>Niveau :</strong> ${equipe.niveau}</p>
                     <div style="margin-top: 12px;">

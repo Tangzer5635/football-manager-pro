@@ -14,7 +14,6 @@ import models.entities.Manage.FactoryManage;
 import models.facades.IModel;
 import models.referencies.Niveau;
 import models.referencies.Poste;
-import views.utils.JsonExporter;
 
 import java.io.File;
 import java.io.IOException;
