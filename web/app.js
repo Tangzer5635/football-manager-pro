@@ -1757,7 +1757,7 @@ async function afficherClassement(
             html += `
                 <tr>
                     <td>${index + 1}</td>
-                    <td><strong>${club.nom_club}</strong> <small style="color:#888;font-size:11px;">\u2192 historique</small></td>
+                    <td><strong>${club.nom_club}</strong></td>
                     <td>${club.points}</td>
                     <td>${club.victoires}</td>
                     <td>${club.nuls}</td>
@@ -1812,12 +1812,12 @@ async function afficherMatchs(title, subtitle, content) {
     const matchs = await response.json();
 
     const equipeToClub = {};
-
+    console.log(data.clubs);
     data.clubs.forEach(club => {
 
         club.equipes.forEach(equipe => {
 
-            equipeToClub[equipe.id_equipe] = {
+            equipeToClub[equipe.id] = {
 
                 nomClub: club.nom_club || club.nom,
                 niveau: equipe.niveau
@@ -1952,7 +1952,7 @@ function ouvrirModalMatch() {
         club.equipes.forEach(equipe => {
 
             options += `
-                <option value="${equipe.id_equipe}">
+                <option value="${equipe.id}">
                     ${club.nom_club || club.nom} - ${equipe.niveau}
                 </option>
             `;
