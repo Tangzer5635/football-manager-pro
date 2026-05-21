@@ -49,6 +49,28 @@ async function chargerDonnees() {
                 ),
 
                 fetch(
+                    `${SUPABASE_URL}/personne?select=*`,
+                    {
+                        headers: {
+                            apikey: SUPABASE_API_KEY,
+                            Authorization:
+                                `Bearer ${SUPABASE_API_KEY}`
+                        }
+                    }
+                ),
+
+                fetch(
+                    `${SUPABASE_URL}/entraineur?select=*`,
+                    {
+                        headers: {
+                            apikey: SUPABASE_API_KEY,
+                            Authorization:
+                                `Bearer ${SUPABASE_API_KEY}`
+                        }
+                    }
+                ),
+
+                fetch(
                     `${SUPABASE_URL}/joueurs?select=*`,
                     {
                         headers: {
@@ -76,29 +98,50 @@ async function chargerDonnees() {
                         equipe =>
                             equipe.id_club === club.id_club
                     )
-                    .map(equipe => ({
+                    .map(equipe => {
 
-                        id: equipe.id_equipe,
-                        nom: equipe.nom_equipe,
-                        niveau:
-                            {
-                                1: "Ligue 1",
-                                2: "Ligue 2",
-                                3: "Ligue 3",
-                                4: "National",
-                                5: "National 2",
-                                6: "National 3",
-                            }[equipe.id_niveau] || "Inconnu",
-                        joueurs: joueurs.filter(
-                            joueur =>
-                                joueur.id_equipe ===
-                                equipe.id_equipe
-                        ),
-                        entraineur:
-                            equipe.personne
-                                ? `${equipe.personne.prenom} ${equipe.personne.nom}`
-                                : "-"
-                    }))
+                        const entraineur =
+                            entraineurs.find(
+                                e =>
+                                    e.id_entraineur ===
+                                    equipe.id_entraineur
+                            );
+
+                        const personne =
+                            personnes.find(
+                                p =>
+                                    p.id_personne ===
+                                    entraineur?.id_entraineur
+                            );
+
+                        return {
+
+                            id: equipe.id_equipe,
+
+                            nom: equipe.nom_equipe,
+
+                            entraineur:
+                                personne
+                                    ? `${personne.prenom} ${personne.nom}`
+                                    : "-",
+
+                            niveau:
+                                {
+                                    1: "Ligue 1",
+                                    2: "Ligue 2",
+                                    3: "Ligue 3",
+                                    4: "National",
+                                    5: "National 2",
+                                    6: "National 3",
+                                }[equipe.id_niveau] || "Inconnu",
+
+                            joueurs: joueurs.filter(
+                                joueur =>
+                                    joueur.id_equipe ===
+                                    equipe.id_equipe
+                            )
+                        };
+                    })
             }))
         };
 
