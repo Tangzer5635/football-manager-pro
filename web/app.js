@@ -586,8 +586,12 @@ function filtrerTitulairesParEquipe() {
 // ===================================================================
 async function creerClub() {
 
+    console.log("CREER CLUB");
+
     const nom =
         prompt("Nom du club :");
+
+    console.log("Nom :", nom);
 
     if (!nom) {
         return;
@@ -596,11 +600,15 @@ async function creerClub() {
     const dateCreation =
         prompt("Date de création (YYYY-MM-DD) :");
 
+    console.log("Date :", dateCreation);
+
     if (!dateCreation) {
         return;
     }
 
     try {
+
+        console.log("AVANT FETCH");
 
         const response = await fetch(
             `${SUPABASE_URL}/club`,
@@ -621,16 +629,12 @@ async function creerClub() {
             }
         );
 
-        if (!response.ok) {
-            const erreur =
-                await response.text();
+        console.log("STATUS :", response.status);
 
-            console.error(erreur);
+        const texte =
+            await response.text();
 
-            alert(erreur);
-
-            return;
-        }
+        console.log("REPONSE :", texte);
 
         await chargerDonnees();
 
@@ -640,9 +644,7 @@ async function creerClub() {
 
         console.error(error);
 
-        alert(
-            "Erreur création club."
-        );
+        alert(error);
     }
 }
 

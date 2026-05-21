@@ -14,25 +14,8 @@ import java.net.URI;
 public class Main {
 
     public static void main(String[] args) {
-        FlatDarkLaf.setup();
 
-        IModel model = new ModelImpl();
+        System.out.println("Application lancée");
 
-        // Démarrage de l'API
-        ApiServer.start(model);
-
-        // Ouvre automatiquement l'interface web
-        try {
-            Desktop.getDesktop().browse(
-                    new URI("http://localhost:63342/SGT_LEBUHE_TEST_INT_JAVABASE_WB47/web/index.html")
-            );
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-//        // Interface Swing
-//        IView view = new ViewConsoleImpl();
-//        Presenteur presenteur = new Presenteur(model, view);
-//        presenteur.start();
     }
 }
