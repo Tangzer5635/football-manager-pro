@@ -1906,6 +1906,8 @@ async function ajouterMatch() {
 
         alert("✅ Match ajouté !");
 
+        showPage('classement');
+
     } else {
 
         const erreur = await response.text();
