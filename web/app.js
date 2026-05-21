@@ -38,7 +38,7 @@ async function chargerDonnees() {
                 ),
 
                 fetch(
-                    `${SUPABASE_URL}/equipe?select=*`,
+                    `${SUPABASE_URL}/equipe?select=*,personne(nom,prenom)`,
                     {
                         headers: {
                             apikey: SUPABASE_API_KEY,
@@ -93,7 +93,11 @@ async function chargerDonnees() {
                             joueur =>
                                 joueur.id_equipe ===
                                 equipe.id_equipe
-                        )
+                        ),
+                        entraineur:
+                            equipe.personne
+                                ? `${equipe.personne.prenom} ${equipe.personne.nom}`
+                                : "-"
                     }))
             }))
         };
@@ -285,14 +289,11 @@ function afficherEquipes(title, subtitle, content) {
                     <td>${index++}</td>
                     <td>${club.nom}</td>
                     <td>${equipe.niveau}</td>
-                    <td>-</td>
+                    <td>${equipe.entraineur}</td>
                     <td>${equipe.joueurs.length}</td>
                     <td>
                         <button class="action-btn danger-btn"
-                                onclick="supprimerEquipe(
-                                    '${escapeJs(club.nom)}',
-                                    '${escapeJs(equipe.niveau)}'
-                                )">
+                                onclick="supprimerEquipe(${equipe.id})">
                             🗑️ Supprimer
                         </button>
                     </td>
@@ -897,6 +898,89 @@ async function creerNouvelleEquipe() {
 
     try {
 
+        // =====================================
+        // Génération ID personne
+        // =====================================
+        const personnesRes = await fetch(
+            `${SUPABASE_URL}/personne?select=id_personne`,
+            {
+                headers: {
+                    apikey: SUPABASE_API_KEY,
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                }
+            }
+        );
+
+        const personnes =
+            await personnesRes.json();
+
+        const nouvelId =
+            personnes.length + 1;
+
+        // =====================================
+        // Création PERSONNE
+        // =====================================
+        await fetch(
+            `${SUPABASE_URL}/personne`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json",
+
+                    apikey:
+                    SUPABASE_API_KEY,
+
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                },
+
+                body: JSON.stringify({
+
+                    id_personne:
+                    nouvelId,
+
+                    nom:
+                    nom,
+
+                    prenom:
+                    prenom
+                })
+            }
+        );
+
+        // =====================================
+        // Création ENTRAINEUR
+        // =====================================
+        await fetch(
+            `${SUPABASE_URL}/entraineur`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json",
+
+                    apikey:
+                    SUPABASE_API_KEY,
+
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                },
+
+                body: JSON.stringify({
+
+                    id_entraineur:
+                    nouvelId
+                })
+            }
+        );
+
+        // =====================================
+        // Création EQUIPE
+        // =====================================
         const response = await fetch(
             `${SUPABASE_URL}/equipe`,
             {
@@ -924,7 +1008,8 @@ async function creerNouvelleEquipe() {
                     id_club:
                         Number(clubId),
 
-                    id_entraineur: 1
+                    id_entraineur:
+                    nouvelId
                 })
             }
         );
