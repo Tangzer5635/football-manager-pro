@@ -1002,7 +1002,9 @@ async function creerNouvelleEquipe() {
             await personnesRes.json();
 
         const nouvelId =
-            Date.now();
+            Math.floor(
+                Math.random() * 1000000
+            );
 
         // =====================================
         // Création PERSONNE
