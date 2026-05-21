@@ -1703,8 +1703,6 @@ async function afficherClassement(
     subtitle,
     content
 ) {
-    console.log("idClub reçu :", idClub);
-    console.log("clubs :", data.clubs);
     title.textContent = "Classement";
 
     subtitle.textContent =
@@ -1832,6 +1830,20 @@ async function afficherMatchs(title, subtitle, content) {
 
     let rows = "";
 
+    if (matchs.length === 0) {
+
+        rows = `
+            <tr>
+                <td colspan="3"
+                    style="text-align:center;color:#888;">
+    
+                    Aucun match enregistré
+    
+                </td>
+            </tr>
+        `;
+    }
+
     matchs.forEach(match => {
 
         const domicile =
@@ -1863,19 +1875,7 @@ async function afficherMatchs(title, subtitle, content) {
         
             </tr>
         `;
-        if (matchs.length === 0) {
 
-                rows = `
-            <tr>
-                <td colspan="3"
-                    style="text-align:center;color:#888;">
-    
-                    Aucun match enregistré
-    
-                </td>
-            </tr>
-        `;
-        }
     });
 
     content.innerHTML = `
@@ -1952,8 +1952,8 @@ function ouvrirModalMatch() {
         club.equipes.forEach(equipe => {
 
             options += `
-                <option value="${equipe.id}">
-                    ${club.nom} - ${equipe.niveau}
+                <option value="${equipe.id_equipe}">
+                    ${club.nom_club || club.nom} - ${equipe.niveau}
                 </option>
             `;
         });
