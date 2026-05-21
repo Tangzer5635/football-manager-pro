@@ -521,7 +521,7 @@ function afficherJoueurs(title, subtitle, content) {
 
                 // Objet complet envoyé à la modale
                 const joueurData = {
-                    nom: joueur.id,
+                    nom: joueur.nom,
                     prenom: joueur.prenom,
                     age: joueur.age ?? calculerAge(joueur.dateNaissance),
                     poste: joueur.poste,
