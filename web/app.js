@@ -1556,6 +1556,8 @@ async function soumettreAjoutJoueur() {
         // =====================================
         // Création JOUEUR
         // =====================================
+        console.log(poste);
+        console.log(Number(poste));
         const response = await fetch(
             `${SUPABASE_URL}/joueurs`,
             {
