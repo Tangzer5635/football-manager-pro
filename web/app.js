@@ -1155,50 +1155,39 @@ async function creerNouvelleEquipe() {
 // ===================================================================
 // API - JOUEURS
 // ===================================================================
-async function ajouterJoueur() {
-    try {
+function ajouterJoueur() {
 
-        await fetch(
-            `${SUPABASE_URL}/joueurs`,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json",
-                    apikey: SUPABASE_API_KEY,
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
-                },
-
-                body: JSON.stringify({
-
-                    prix: 1000000,
-
-                    date_naissance:
-                        "2000-01-01",
-
-                    titulaire: true,
-
-                    id_poste: 1,
-
-                    id_club: 1,
-
-                    id_equipe: 1
-                })
-            }
+    const selectClub =
+        document.getElementById(
+            "joueur-club"
         );
 
-        await chargerDonnees();
-
-        showPage("joueurs");
-
-    } catch (error) {
-
-        console.error(
-            "Erreur création joueur :",
-            error
+    const selectEquipe =
+        document.getElementById(
+            "joueur-equipe"
         );
-    }
+
+    selectClub.innerHTML = "";
+    selectEquipe.innerHTML = "";
+
+    data.clubs.forEach(club => {
+
+        const option =
+            document.createElement("option");
+
+        option.value = club.nom;
+
+        option.textContent = club.nom;
+
+        selectClub.appendChild(option);
+    });
+
+    // Charger équipes du premier club
+    chargerEquipesPourJoueur();
+
+    document
+        .getElementById("modal-joueur")
+        .classList.remove("hidden");
 }
 
 async function supprimerJoueur(clubNom, niveau, nom, prenom, age) {
@@ -1587,7 +1576,7 @@ async function soumettreAjoutJoueur() {
                 body: JSON.stringify({
 
                     id_joueur:
-                    nouvelId,
+                        nouvelId,
 
                     prix:
                         Number(prix),
