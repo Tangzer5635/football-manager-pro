@@ -1816,14 +1816,18 @@ async function afficherMatchs(title, subtitle, content) {
     const equipeToClub = {};
 
     data.clubs.forEach(club => {
+
         club.equipes.forEach(equipe => {
 
-            equipeToClub[equipe.id] = {
-                nomClub: club.nom,
+            equipeToClub[equipe.id_equipe] = {
+
+                nomClub: club.nom_club || club.nom,
                 niveau: equipe.niveau
+
             };
 
         });
+
     });
 
     let rows = "";
@@ -1838,17 +1842,40 @@ async function afficherMatchs(title, subtitle, content) {
 
         rows += `
             <tr>
-                <td>${domicile?.nomClub || "-"}</td>
-
-                <td style="font-weight:bold;text-align:center;">
+        
+                <td>
+                    <strong>${domicile?.nomClub || "-"}</strong>
+                </td>
+        
+                <td style="font-weight:bold;
+                           text-align:center;
+                           font-size:18px;">
+        
                     ${match.score_domicile}
                     -
                     ${match.score_exterieur}
+        
                 </td>
-
-                <td>${exterieur?.nomClub || "-"}</td>
+        
+                <td>
+                    <strong>${exterieur?.nomClub || "-"}</strong>
+                </td>
+        
             </tr>
         `;
+        if (matchs.length === 0) {
+
+                rows = `
+            <tr>
+                <td colspan="3"
+                    style="text-align:center;color:#888;">
+    
+                    Aucun match enregistré
+    
+                </td>
+            </tr>
+        `;
+        }
     });
 
     content.innerHTML = `
@@ -1912,98 +1939,35 @@ function afficherErreurMatch(msg) {
 
 function ouvrirModalMatch() {
 
-    const equipes = [];
+    const domicile =
+        document.getElementById("domicile");
+
+    const exterieur =
+        document.getElementById("exterieur");
+
+    let options = "";
 
     data.clubs.forEach(club => {
+
         club.equipes.forEach(equipe => {
 
-            equipes.push({
-                id: equipe.id,
-                nom: club.nom,
-                niveau: equipe.niveau
-            });
-
+            options += `
+                <option value="${equipe.id}">
+                    ${club.nom} - ${equipe.niveau}
+                </option>
+            `;
         });
     });
 
-    const options = equipes.map(e => `
-        <option value="${e.id}">
-            ${e.nom} - ${e.niveau}
-        </option>
-    `).join("");
+    domicile.innerHTML = options;
+    exterieur.innerHTML = options;
 
-    const modal = document.createElement("div");
+    document.getElementById("modal-match")
+        .style.display = "flex";
+}
 
-    modal.className = "modal";
+function fermerModalMatch() {
 
-    modal.innerHTML = `
-        <div class="modal-overlay"></div>
-
-        <div class="modal-content">
-
-            <div class="modal-header">
-                <h2>⚽ Créer un match</h2>
-
-                <button class="modal-close">
-                    ✕
-                </button>
-            </div>
-
-            <div class="form-group">
-                <label>Domicile</label>
-
-                <select id="domicile">
-                    ${options}
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Extérieur</label>
-
-                <select id="exterieur">
-                    ${options}
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Score domicile</label>
-
-                <input type="number"
-                       id="scoreDom"
-                       value="0">
-            </div>
-
-            <div class="form-group">
-                <label>Score extérieur</label>
-
-                <input type="number"
-                       id="scoreExt"
-                       value="0">
-            </div>
-
-            <div id="match-erreur"
-                 style="color:red;margin-bottom:10px;display:none;">
-            </div>
-
-            <button class="action-btn"
-                    onclick="ajouterMatch()">
-
-                ✅ Ajouter
-
-            </button>
-
-        </div>
-    `;
-
-    document.body.appendChild(modal);
-
-    modal.querySelectorAll(
-        ".modal-close, .modal-overlay"
-    ).forEach(el => {
-
-        el.addEventListener("click", () => {
-            modal.remove();
-        });
-
-    });
+    document.getElementById("modal-match")
+        .style.display = "none";
 }

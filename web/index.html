@@ -230,6 +230,72 @@
     </div>
 
 </div>
+
+<div id="modal-match" class="modal" style="display:none;">
+
+    <div class="modal-overlay"
+         onclick="fermerModalMatch()">
+    </div>
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+            <h2>⚽ Créer un match</h2>
+
+            <button class="modal-close"
+                    onclick="fermerModalMatch()">
+                ✕
+            </button>
+        </div>
+
+        <div class="form-group">
+            <label>Domicile</label>
+
+            <select id="domicile"></select>
+        </div>
+
+        <div class="form-group">
+            <label>Extérieur</label>
+
+            <select id="exterieur"></select>
+        </div>
+
+        <div class="form-group">
+            <label>Score domicile</label>
+
+            <input type="number"
+                   id="scoreDom"
+                   min="0"
+                   value="0">
+        </div>
+
+        <div class="form-group">
+            <label>Score extérieur</label>
+
+            <input type="number"
+                   id="scoreExt"
+                   min="0"
+                   value="0">
+        </div>
+
+        <div id="match-erreur"
+             style="display:none;color:#ef4444;margin-top:10px;">
+        </div>
+
+        <div class="modal-footer">
+
+            <button class="action-btn"
+                    onclick="ajouterMatch()">
+
+                ✅ Ajouter
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
 <script src="app.js"></script>
 </body>
 </html>
