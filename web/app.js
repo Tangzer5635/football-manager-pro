@@ -1708,7 +1708,6 @@ async function afficherClassement(
 
     subtitle.textContent =
         "Classement du championnat";
-    console.log(classement);
     try {
 
         const response = await fetch(
@@ -1739,6 +1738,7 @@ async function afficherClassement(
 
                     <tbody>
         `;
+        console.log(classement);
 
         classement.forEach((club, index) => {
 
