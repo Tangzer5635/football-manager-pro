@@ -1815,7 +1815,7 @@ async function afficherMatchs(title, subtitle, content) {
     console.log(data.clubs);
 
     const equipesResponse = await fetch(
-        `${SUPABASE_URL}/equipes?select=id_equipe,id_club`,
+        `${SUPABASE_URL}/equipe?select=id_equipe,id_club`,
         {
             headers: {
                 apikey: SUPABASE_API_KEY,
@@ -1920,35 +1920,6 @@ async function afficherMatchs(title, subtitle, content) {
 
         </table>
     `;
-}
-
-function filtrerEquipesParNiveau() {
-    const idNiveau = parseInt(document.getElementById("niveau-match").value, 10);
-    const equipes = (window._equipesMatchs || []).filter(e => {
-        // id_niveau peut \u00eatre absent, on se base sur le label
-        const niveauMap = {
-            1: "Ligue 1", 2: "Ligue 2", 3: "Ligue 3",
-            4: "National", 5: "National 2", 6: "National 3"
-        };
-        return e.niveau === niveauMap[idNiveau];
-    });
-
-    const makeOptions = equipes.map(e =>
-        `<option value="${e.id}">${e.nomClub} \u2014 ${e.niveau}</option>`
-    ).join("");
-
-    const empty = `<option value="">Aucune \u00e9quipe \u00e0 ce niveau</option>`;
-
-    document.getElementById("domicile").innerHTML = equipes.length ? makeOptions : empty;
-    document.getElementById("exterieur").innerHTML = equipes.length ? makeOptions : empty;
-}
-
-function afficherErreurMatch(msg) {
-    const el = document.getElementById("match-erreur");
-    if (el) {
-        el.textContent = msg;
-        el.style.display = "block";
-    }
 }
 
 function ouvrirModalMatch() {
