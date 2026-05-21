@@ -1972,8 +1972,11 @@ async function ajouterMatch() {
 }
 async function afficherHistoriqueClub(idClub, nomClub) {
 
+    await chargerDonnees();
+
     const club = data.clubs.find(c => String(c.id) === String(idClub));
-    if (!club || !club.equipes.length) {
+
+    if (!club || club.equipes.length === 0) {
         alert("Aucune équipe trouvée pour ce club.");
         return;
     }
