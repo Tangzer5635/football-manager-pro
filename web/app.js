@@ -776,61 +776,13 @@ function fermerModalClub() {
 // ===================================================================
 // API - EQUIPES
 // ===================================================================
-async function creerEquipe() {
+function creerEquipe() {
 
-    const clubId =
-        document.getElementById(
-            "equipe-club"
-        ).value;
+    remplirSelectClubsEquipe();
 
-    const nomEquipe =
-        document.getElementById(
-            "equipe-nom"
-        ).value;
-
-    const niveau =
-        document.getElementById(
-            "equipe-niveau"
-        ).value;
-
-    try {
-
-        await fetch(
-            `${SUPABASE_URL}/equipe`,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json",
-                    apikey: SUPABASE_API_KEY,
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
-                },
-
-                body: JSON.stringify({
-
-                    nom_equipe: nomEquipe,
-
-                    id_niveau: Number(niveau),
-
-                    id_club: Number(clubId),
-
-                    id_entraineur: 1
-                })
-            }
-        );
-
-        await chargerDonnees();
-
-        showPage("equipes");
-
-    } catch (error) {
-
-        console.error(
-            "Erreur création équipe :",
-            error
-        );
-    }
+    document
+        .getElementById("modal-equipe")
+        .classList.remove("hidden");
 }
 
 async function supprimerEquipe(idEquipe) {
@@ -862,6 +814,140 @@ async function supprimerEquipe(idEquipe) {
 
         alert(
             "Erreur suppression équipe."
+        );
+    }
+}
+
+function remplirSelectClubsEquipe() {
+
+    const select =
+        document.getElementById(
+            "equipe-club"
+        );
+
+    if (!select) {
+        return;
+    }
+
+    select.innerHTML = "";
+
+    data.clubs.forEach(club => {
+
+        const option =
+            document.createElement("option");
+
+        option.value = club.nom;
+
+        option.textContent = club.nom;
+
+        select.appendChild(option);
+    });
+}
+
+async function soumettreCreationEquipe() {
+
+    const clubNom =
+        document.getElementById(
+            "equipe-club"
+        ).value;
+
+    const niveau =
+        document.getElementById(
+            "equipe-niveau"
+        ).value;
+
+    const nom =
+        document.getElementById(
+            "entraineur-nom"
+        ).value.trim();
+
+    const prenom =
+        document.getElementById(
+            "entraineur-prenom"
+        ).value.trim();
+
+    if (!clubNom || !niveau) {
+
+        alert(
+            "Veuillez remplir les champs."
+        );
+
+        return;
+    }
+
+    const club = data.clubs.find(
+        c => c.nom === clubNom
+    );
+
+    if (!club) {
+
+        alert(
+            "Club introuvable."
+        );
+
+        return;
+    }
+    console.log(club);
+    console.log(niveau);
+    try {
+
+        const response = await fetch(
+            `${SUPABASE_URL}/equipe`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json",
+
+                    apikey:
+                    SUPABASE_API_KEY,
+
+                    Authorization:
+                        `Bearer ${SUPABASE_API_KEY}`
+                },
+
+                body: JSON.stringify({
+
+                    nom_equipe:
+                        `Equipe ${niveau}`,
+
+                    id_niveau:
+                        Number(niveau),
+
+                    id_club:
+                        Number(club.id),
+
+                    id_entraineur: 1
+                })
+            }
+        );
+
+        if (!response.ok) {
+
+            console.log(
+                await response.text()
+            );
+
+            alert(
+                "Erreur création équipe."
+            );
+
+            return;
+        }
+
+        fermerModalEquipe();
+
+        await chargerDonnees();
+
+        showPage("equipes");
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            "Erreur création équipe."
         );
     }
 }
@@ -1092,112 +1178,6 @@ function fermerModalEquipe() {
     document.getElementById("modal-equipe").classList.add("hidden");
 }
 
-async function soumettreCreationEquipe() {
-
-    const clubNom =
-        document.getElementById(
-            "equipe-club"
-        ).value;
-
-    const niveau =
-        document.getElementById(
-            "equipe-niveau"
-        ).value;
-
-    const nom =
-        document.getElementById(
-            "entraineur-nom"
-        ).value.trim();
-
-    const prenom =
-        document.getElementById(
-            "entraineur-prenom"
-        ).value.trim();
-
-    if (!clubNom || !niveau) {
-
-        alert(
-            "Veuillez remplir les champs."
-        );
-
-        return;
-    }
-
-    const club = data.clubs.find(
-        c => c.nom === clubNom
-    );
-
-    if (!club) {
-
-        alert(
-            "Club introuvable."
-        );
-
-        return;
-    }
-
-    try {
-
-        const response = await fetch(
-            `${SUPABASE_URL}/equipe`,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json",
-
-                    apikey:
-                    SUPABASE_API_KEY,
-
-                    Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
-                },
-
-                body: JSON.stringify({
-
-                    nom_equipe:
-                        `Equipe ${niveau}`,
-
-                    id_niveau:
-                        Number(niveau),
-
-                    id_club:
-                        Number(club.id),
-
-                    id_entraineur: 1
-                })
-            }
-        );
-
-        if (!response.ok) {
-
-            console.log(
-                await response.text()
-            );
-
-            alert(
-                "Erreur création équipe."
-            );
-
-            return;
-        }
-
-        fermerModalEquipe();
-
-        await chargerDonnees();
-
-        showPage("equipes");
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(
-            "Erreur création équipe."
-        );
-    }
-}
 
 function afficherErreurModal(message) {
     let zoneErreur = document.getElementById(
