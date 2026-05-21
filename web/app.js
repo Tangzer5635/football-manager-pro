@@ -1841,7 +1841,10 @@ async function ajouterMatch() {
                     SUPABASE_API_KEY,
 
                     Authorization:
-                        `Bearer ${SUPABASE_API_KEY}`
+                        `Bearer ${SUPABASE_API_KEY}`,
+
+                    Prefer:
+                        "return=minimal"
                 },
 
                 body: JSON.stringify({
@@ -1865,6 +1868,8 @@ async function ajouterMatch() {
                 })
             }
         );
+
+        console.log(await response.clone().text());
 
         if (!response.ok) {
 
