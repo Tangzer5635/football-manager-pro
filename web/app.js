@@ -1878,8 +1878,8 @@ async function ajouterMatch() {
     const score_exterieur =
         document.getElementById("scoreExt").value;
 
-    await fetch(
-        "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/match",
+    const response = await fetch(
+        "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/matchs",
         {
             method: "POST",
 
@@ -1902,5 +1902,14 @@ async function ajouterMatch() {
         }
     );
 
-    alert("✅ Match ajouté !");
+    if (response.ok) {
+
+        alert("✅ Match ajouté !");
+
+    } else {
+
+        console.error(await response.text());
+
+        alert("❌ Erreur ajout match");
+    }
 }
