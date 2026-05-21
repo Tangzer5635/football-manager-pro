@@ -1815,7 +1815,6 @@ async function ajouterMatch() {
         );
 
     if (
-        isNaN(id_championnat) ||
         isNaN(equipe_domicile) ||
         isNaN(equipe_exterieur)
     ) {
@@ -1850,9 +1849,6 @@ async function ajouterMatch() {
                 },
 
                 body: JSON.stringify({
-
-                    id_championnat:
-                    id_championnat,
 
                     equipe_domicile:
                     equipe_domicile,
