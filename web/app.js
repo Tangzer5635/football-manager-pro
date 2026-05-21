@@ -1713,16 +1713,7 @@ async function afficherClassement(
     try {
 
         const response = await fetch(
-            "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/classement?select=*,club(*)",
-            {
-                headers: {
-                    "apikey":
-                        "sb_publishable_qCzHEqb9ulwCVpy_jZ-DQQ_OsGW5lcT",
-
-                    "Authorization":
-                        "Bearer sb_publishable_qCzHEqb9ulwCVpy_jZ-DQQ_OsGW5lcT"
-                }
-            }
+            "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1/vue_classement?select=*&apikey=sb_publishable_qCzHEqb9ulwCVpy_jZ-DQQ_OsGW5lcT"
         );
 
         const classement =
@@ -1752,30 +1743,30 @@ async function afficherClassement(
 
         classement.forEach((club, index) => {
 
-            const difference =
-                club.buts_pour - club.buts_contre;
+                    const difference =
+                        club.buts_pour - club.buts_contre;
 
-            html += `
+                    html += `
                 <tr>
-
+        
                     <td>${index + 1}</td>
-
-                    <td>${club.club.nom_club}</td>
-
+        
+                    <td>${club.nom_club}</td>
+        
                     <td>${club.points}</td>
-
+        
                     <td>${club.victoires}</td>
-
+        
                     <td>${club.nuls}</td>
-
+        
                     <td>${club.defaites}</td>
-
+        
                     <td>${club.buts_pour}</td>
-
+        
                     <td>${club.buts_contre}</td>
-
+        
                     <td>${difference}</td>
-
+        
                 </tr>
             `;
         });
