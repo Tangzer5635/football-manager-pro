@@ -1814,7 +1814,7 @@ function filtrerJoueurs() {
             equipe === "" || equipeNom.includes(equipe);
 
         if (matchNom && matchEquipe) {
-            card.style.display = "flex";
+            card.style.display = "block";
         } else {
             card.style.display = "none";
         }
