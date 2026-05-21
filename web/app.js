@@ -778,7 +778,24 @@ function fermerModalClub() {
 // ===================================================================
 function creerEquipe() {
 
-    remplirSelectClubsEquipe();
+    const select =
+        document.getElementById(
+            "equipe-club"
+        );
+
+    select.innerHTML = "";
+
+    data.clubs.forEach(club => {
+
+        const option =
+            document.createElement("option");
+
+        option.value = club.id;
+
+        option.textContent = club.nom;
+
+        select.appendChild(option);
+    });
 
     document
         .getElementById("modal-equipe")
@@ -844,9 +861,9 @@ function remplirSelectClubsEquipe() {
     });
 }
 
-async function soumettreCreationEquipe() {
+async function creerNouvelleEquipe() {
 
-    const clubNom =
+    const clubId =
         document.getElementById(
             "equipe-club"
         ).value;
@@ -866,29 +883,18 @@ async function soumettreCreationEquipe() {
             "entraineur-prenom"
         ).value.trim();
 
-    if (!clubNom || !niveau) {
-
+    if (
+        !clubId ||
+        !niveau ||
+        !nom ||
+        !prenom
+    ) {
         alert(
-            "Veuillez remplir les champs."
+            "Veuillez remplir tous les champs."
         );
-
         return;
     }
 
-    const club = data.clubs.find(
-        c => c.nom === clubNom
-    );
-
-    if (!club) {
-
-        alert(
-            "Club introuvable."
-        );
-
-        return;
-    }
-    console.log(club);
-    console.log(niveau);
     try {
 
         const response = await fetch(
@@ -916,7 +922,7 @@ async function soumettreCreationEquipe() {
                         Number(niveau),
 
                     id_club:
-                        Number(club.id),
+                        Number(clubId),
 
                     id_entraineur: 1
                 })
