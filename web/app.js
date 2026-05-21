@@ -647,7 +647,7 @@ async function creerClub() {
         document.getElementById(
             "club-date"
         ).value = "";
-        creerClub()
+        fermerModalClub();
         await chargerDonnees();
 
         showPage("clubs");
