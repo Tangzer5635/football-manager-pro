@@ -1820,10 +1820,11 @@ async function ajouterMatch() {
         );
 
     if (
+        isNaN(id_championnat) ||
         isNaN(equipe_domicile) ||
         isNaN(equipe_exterieur)
     ) {
-        alert("Sélectionnez les équipes");
+        alert("Veuillez remplir tous les champs");
         return;
     }
 
@@ -1840,7 +1841,8 @@ async function ajouterMatch() {
                 method: "POST",
 
                 headers: {
-                    "Content-Type": "application/json",
+                    "Content-Type":
+                        "application/json",
 
                     apikey:
                     SUPABASE_API_KEY,
@@ -1876,8 +1878,6 @@ async function ajouterMatch() {
                 })
             }
         );
-
-        console.log(await response.clone().text());
 
         if (!response.ok) {
 
@@ -2065,10 +2065,10 @@ function ouvrirModalMatch() {
         club.equipes.forEach(equipe => {
 
             options += `
-            <option value="${equipe.id}">
-                ${club.nom} - ${equipe.niveau}
-            </option>
-        `;
+                <option value="${equipe.id}">
+                    ${club.nom} - ${equipe.niveau}
+                </option>
+            `;
         });
     });
 
@@ -2077,6 +2077,12 @@ function ouvrirModalMatch() {
 
     document.getElementById("modal-match")
         .style.display = "flex";
+}
+
+function fermerModalMatch() {
+
+    document.getElementById("modal-match")
+        .style.display = "none";
 }
 
 function fermerModalMatch() {
