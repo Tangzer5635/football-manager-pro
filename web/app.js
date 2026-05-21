@@ -1811,13 +1811,15 @@ async function afficherMatchs(title, subtitle, content) {
 
     const matchs = await response.json();
 
-    const equipeToClub = {};
+    console.log(matchs);
     console.log(data.clubs);
+
+    const equipeToClub = {};
     data.clubs.forEach(club => {
 
         club.equipes.forEach(equipe => {
 
-            equipeToClub[equipe.id] = {
+            equipeToClub[equipe.id_equipe || equipe.id] = {
 
                 nomClub: club.nom_club || club.nom,
                 niveau: equipe.niveau
@@ -1952,7 +1954,7 @@ function ouvrirModalMatch() {
         club.equipes.forEach(equipe => {
 
             options += `
-                <option value="${equipe.id}">
+                <option value="${equipe.id_equipe || equipe.id}">
                     ${club.nom_club || club.nom} - ${equipe.niveau}
                 </option>
             `;
