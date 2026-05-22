@@ -54,7 +54,7 @@ async function chargerDonnees() {
     try {
         const [clubs, equipes, personnes, entraineurs, joueurs] = await Promise.all([
             api("/club?select=*"),
-            api("/equipe?select=*"),
+            api("/equipe?select=*,niveau(id_niveau,libelle_niveau)"),
             api("/personne?select=*"),
             api("/entraineur?select=*"),
             api("/joueurs?select=*")
@@ -75,7 +75,7 @@ async function chargerDonnees() {
                             id: equipe.id_equipe,
                             nom: equipe.nom_equipe,
                             idNiveau: equipe.id_niveau,
-                            niveau: NIVEAUX[equipe.id_niveau] || "Inconnu",
+                            niveau: equipe.niveau?.libelle_niveau || "Inconnu",
                             entraineur: personneCoach
                                 ? `${personneCoach.prenom} ${personneCoach.nom}`
                                 : "-",
