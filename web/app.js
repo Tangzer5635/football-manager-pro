@@ -993,8 +993,17 @@ function afficherPresentationClub(club) {
 
     const equipesHtml = club.equipes.map(equipe => `
         <div class="club-equipe-card">
-            <h3>⚽ ${equipe.niveau}</h3>
-
+            <div class="club-equipe-header">
+            
+                <img
+                    src="${club.logo}"
+                    class="club-equipe-logo"
+                    alt="${club.nom}"
+                >
+            
+                <h3>${equipe.niveau}</h3>
+            
+            </div>
             <p>
                 <strong>Entraîneur :</strong>
                 ${equipe.entraineur}
@@ -1016,11 +1025,29 @@ function afficherPresentationClub(club) {
 
         <div class="modal-content">
 
-            <div class="modal-header">
-                <h2>🏟️ ${club.nom}</h2>
+            <div class="modal-header club-modal-header">
 
-                <button class="modal-close">✕</button>
-            </div>
+    <div class="club-modal-title">
+
+        <img
+            src="${club.logo}"
+            alt="${club.nom}"
+            class="club-logo-large"
+        >
+
+        <div>
+            <h2>${club.nom}</h2>
+
+            <p class="club-founded">
+                Fondé le ${formatDate(club.dateCreation)}
+            </p>
+        </div>
+
+    </div>
+
+    <button class="modal-close">✕</button>
+
+</div>
 
             <div class="modal-body">
 

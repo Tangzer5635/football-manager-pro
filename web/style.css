@@ -1006,6 +1006,50 @@ body {
     background:white;
     padding:3px;
 }
+
+.club-modal-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.club-modal-title{
+    display:flex;
+    align-items:center;
+    gap:20px;
+}
+
+.club-logo-large{
+    width:90px;
+    height:90px;
+    object-fit:contain;
+    border-radius:50%;
+    background:white;
+    padding:8px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.25);
+}
+
+.club-founded{
+    color:#94a3b8;
+    margin-top:6px;
+    font-size:14px;
+}
+
+.club-equipe-header{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:12px;
+}
+
+.club-equipe-logo{
+    width:42px;
+    height:42px;
+    object-fit:contain;
+    border-radius:50%;
+    background:white;
+    padding:4px;
+}
 /* =========================================================
    RESPONSIVE
 ========================================================= */
