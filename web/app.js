@@ -3,6 +3,7 @@
 // ===================================================================
 const SUPABASE_URL = "https://zqavhuzfgzkimduzabbz.supabase.co/rest/v1";
 const SUPABASE_API_KEY = "sb_publishable_qCzHEqb9ulwCVpy_jZ-DQQ_OsGW5lcT";
+const LOGO_API_KEY = "pk_cXLAhL1uTtOWa6R8tAIUAQ";
 
 const NIVEAUX = {
     1: "Ligue 1",
