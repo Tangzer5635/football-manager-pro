@@ -856,6 +856,8 @@ function fermerModalClub() {
 async function creerClub() {
     const nom         = document.getElementById("club-nom").value.trim();
     const dateCreation = document.getElementById("club-date").value;
+    const logo = await trouverLogoClub(nom);
+
 
     if (!nom || !dateCreation) {
         afficherErreurModal("Veuillez remplir tous les champs.");
@@ -869,7 +871,7 @@ async function creerClub() {
             body: JSON.stringify({
                 nom_club: nom,
                 date_creation: dateCreation,
-                logo_url: trouverLogoClub(nom)
+                logo_url: logo
             })
         });
 
@@ -901,34 +903,35 @@ async function supprimerClub(nom) {
     }
 }
 
-function trouverLogoClub(nomClub) {
+async function trouverLogoClub(nomClub) {
 
-    const domaines = {
+    try {
 
-        "Paris Saint-Germain": "psg.fr",
-        "Olympique de Marseille": "om.fr",
-        "AS Monaco": "asmonaco.com",
-        "Olympique Lyonnais": "ol.fr",
-        "Football Club de Lorient": "fclweb.fr",
-        "RC Lens": "rclens.fr",
-        "LOSC": "losc.fr",
-        "OGC Nice": "ogcnice.com",
-        "FC Nantes": "fcnantes.com",
-        "Stade Rennais": "staderennais.com",
-        "Le Havre": "hac-foot.com",
-        "Toulouse": "toulousefc.com",
-        "Montpellier": "mhscfoot.com",
-        "Strasbourg": "rcstrasbourgalsace.fr"
+        const res = await fetch(
+            `https://api.logo.dev/search?q=${encodeURIComponent(nomClub)}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${LOGO_API_KEY}`
+                }
+            }
+        );
 
-    };
+        const data = await res.json();
 
-    const domaine = domaines[nomClub];
+        if (!data || !data.length) {
+            return "https://cdn-icons-png.flaticon.com/512/53/53283.png";
+        }
 
-    if (!domaine) {
+        const domaine = data[0].domain;
+
+        return `https://img.logo.dev/${domaine}?token=${LOGO_API_KEY}`;
+
+    } catch (e) {
+
+        console.error("Erreur récupération logo :", e);
+
         return "https://cdn-icons-png.flaticon.com/512/53/53283.png";
     }
-
-    return `https://img.logo.dev/${domaine}?token=${LOGO_API_KEY}`;
 }
 
 // ===================================================================
