@@ -904,35 +904,38 @@ async function supprimerClub(nom) {
     }
 }
 
-async function trouverLogoClub(nomClub) {
+function trouverLogoClub(nomClub) {
 
-    try {
+    const aliases = {
 
-        const res = await fetch(
-            `https://api.logo.dev/search?q=${encodeURIComponent(nomClub)}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${LOGO_API_KEY}`
-                }
-            }
-        );
+        "Angers SCO": "angers-sco.fr",
+        "AJ Auxerre": "aja.fr",
+        "Stade Brestois 29": "sb29.bzh",
+        "Le Havre AC": "hac-foot.com",
+        "RC Lens": "rclens.fr",
+        "LOSC Lille": "losc.fr",
+        "Olympique Lyonnais": "ol.fr",
+        "FC Lorient": "fclweb.fr",
+        "Olympique de Marseille": "om.fr",
+        "FC Metz": "fcmetz.com",
+        "AS Monaco": "asmonaco.com",
+        "FC Nantes": "fcnantes.com",
+        "OGC Nice": "ogcnice.com",
+        "Paris FC": "parisfc.fr",
+        "Paris Saint-Germain": "psg.fr",
+        "Stade Rennais FC": "staderennais.com",
+        "RC Strasbourg Alsace": "rcstrasbourgalsace.fr",
+        "Toulouse FC": "toulousefc.com"
 
-        const data = await res.json();
+    };
 
-        if (!data || !data.length) {
-            return "https://cdn-icons-png.flaticon.com/512/53/53283.png";
-        }
+    const domaine = aliases[nomClub];
 
-        const domaine = data[0].domain;
-
-        return `https://img.logo.dev/${domaine}?token=${LOGO_API_KEY}`;
-
-    } catch (e) {
-
-        console.error("Erreur récupération logo :", e);
-
+    if (!domaine) {
         return "https://cdn-icons-png.flaticon.com/512/53/53283.png";
     }
+
+    return `https://img.logo.dev/${domaine}?token=${LOGO_API_KEY}`;
 }
 
 async function mettreAJourTousLesLogos() {
