@@ -1050,6 +1050,16 @@ body {
     background:white;
     padding:4px;
 }
+
+.match-team{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.match-team-right{
+    justify-content:flex-end;
+}
 /* =========================================================
    RESPONSIVE
 ========================================================= */

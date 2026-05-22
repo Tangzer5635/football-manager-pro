@@ -618,7 +618,19 @@ async function chargerTableauClassement() {
             return `
             <tr>
                 <td class="rang-cell ${rangClass}">${rang}</td>
-                <td><strong>${club.nom_club}</strong></td>
+                <td>
+                    <div class="club-cell">
+                        <img
+                            src="${data.clubs.find(c => c.nom === club.nom_club)?.logo}"
+                            class="club-logo"
+                            alt="${club.nom_club}"
+                        >
+                
+                        <strong>${club.nom_club}</strong>
+                
+                    </div>
+                
+                </td>
                 <td><strong>${club.points}</strong></td>
                 <td>${club.victoires}</td>
                 <td>${club.nuls}</td>
@@ -724,15 +736,51 @@ async function chargerTableauMatchs() {
         const rows = filtres.map(match => {
             const dom = equipeToClub[match.equipe_domicile] || "-";
             const ext = equipeToClub[match.equipe_exterieur] || "-";
+            const logoDom = data.clubs.find(c => c.nom === dom)?.logo;
+            const logoExt = data.clubs.find(c => c.nom === ext)?.logo;
             const domWin = match.score_domicile > match.score_exterieur;
             const extWin = match.score_exterieur > match.score_domicile;
             return `
                 <tr>
-                    <td style="font-weight:${domWin ? "800" : "500"};color:${domWin ? "white" : "#94a3b8"}">${dom}</td>
-                    <td class="score-cell">
-                        ${match.score_domicile}<span class="score-sep">—</span>${match.score_exterieur}
+                    <td>
+                        <div class="match-team">
+                            <img
+                                src="${logoDom}"
+                                class="club-logo"
+                                alt="${dom}"
+                            >
+                            <span
+                                style="
+                                    font-weight:${domWin ? "800" : "500"};
+                                    color:${domWin ? "white" : "#94a3b8"}
+                                "
+                            >
+                                ${dom}
+                            </span>
+                        </div>
                     </td>
-                    <td style="font-weight:${extWin ? "800" : "500"};color:${extWin ? "white" : "#94a3b8"};text-align:right">${ext}</td>
+                    <td class="score-cell">
+                        ${match.score_domicile}
+                        <span class="score-sep">—</span>
+                        ${match.score_exterieur}
+                    </td>
+                    <td>
+                        <div class="match-team match-team-right">
+                            <span
+                                style="
+                                    font-weight:${extWin ? "800" : "500"};
+                                    color:${extWin ? "white" : "#94a3b8"}
+                                "
+                            >
+                                ${ext}
+                            </span>
+                            <img
+                                src="${logoExt}"
+                                class="club-logo"
+                                alt="${ext}"
+                            >
+                        </div>
+                    </td>
                 </tr>
             `;
         }).join("");
