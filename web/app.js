@@ -934,6 +934,37 @@ async function trouverLogoClub(nomClub) {
     }
 }
 
+async function mettreAJourTousLesLogos() {
+
+    for (const club of data.clubs) {
+
+        try {
+
+            const logo = await trouverLogoClub(club.nom);
+
+            await api(`/club?id_club=eq.${club.id}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    logo_url: logo
+                })
+            });
+
+            console.log(`✅ Logo ajouté : ${club.nom}`);
+
+        } catch (e) {
+
+            console.error(`❌ Erreur ${club.nom}`, e);
+        }
+    }
+
+    await chargerDonnees();
+
+    console.log("🏁 Tous les logos ont été mis à jour !");
+}
+
 // ===================================================================
 // PRÉSENTATION CLUB
 // ===================================================================
