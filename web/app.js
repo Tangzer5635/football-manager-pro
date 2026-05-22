@@ -234,43 +234,110 @@ function afficherDashboard(title, subtitle, content) {
 // CLUBS
 // ===================================================================
 function afficherClubs(title, subtitle, content) {
-    title.textContent    = "Clubs";
+    title.textContent = "Clubs";
     subtitle.textContent = "Gestion des clubs";
 
-    const rows = data.clubs.map((club, i) => `
-        <tr>
-            <td>${i + 1}</td>
-            <td>${club.nom}</td>
-            <td>${formatDate(club.dateCreation)}</td>
-            <td>${club.equipes.length}</td>
-            <td>
-                <button class="action-btn danger-btn"
-                        onclick="supprimerClub('${escapeJs(club.nom)}')">
-                    🗑️ Supprimer
-                </button>
-            </td>
-        </tr>
-    `).join("");
+    const rows = data.clubs.map((club, i) => {
+
+        // Liste des niveaux uniques du club
+        const niveaux = [...new Set(
+            club.equipes.map(equipe => equipe.niveau)
+        )].join(", ") || "Aucun";
+
+        return `
+            <tr class="club-row"
+                data-nom="${club.nom.toLowerCase()}"
+                data-niveaux="${niveaux.toLowerCase()}">
+
+                <td>${i + 1}</td>
+
+                <td>
+                    <strong>${club.nom}</strong>
+                </td>
+
+                <td>${formatDate(club.dateCreation)}</td>
+
+                <td>
+                    <span class="badge-niveau">
+                        ${niveaux}
+                    </span>
+                </td>
+
+                <td>${club.equipes.length}</td>
+
+                <td>
+                    <button class="action-btn danger-btn"
+                            onclick="supprimerClub('${escapeJs(club.nom)}')">
+                        🗑️ Supprimer
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join("");
 
     content.innerHTML = `
-        <div class="page-actions">
-            <button class="action-btn" onclick="ouvrirModalClub()">➕ Créer un club</button>
+        <div class="page-actions"
+             style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+
+            <button class="action-btn" onclick="ouvrirModalClub()">
+                ➕ Créer un club
+            </button>
+
+            <input
+                type="text"
+                id="recherche-club"
+                placeholder="🔎 Rechercher un club ou un niveau..."
+                oninput="filtrerClubs()"
+                class="search-input"
+            >
         </div>
+
         ${rows === "" ? `
-            <div class="card"><h3>Aucun club</h3><p>Aucun club trouvé.</p></div>
+            <div class="card">
+                <h3>Aucun club</h3>
+                <p>Aucun club trouvé.</p>
+            </div>
         ` : `
             <div class="table-wrapper">
                 <table class="table">
                     <thead>
-                        <tr><th>#</th><th>Nom</th><th>Date de création</th><th>Équipes</th><th>Actions</th></tr>
+                        <tr>
+                            <th>#</th>
+                            <th>Nom</th>
+                            <th>Date de création</th>
+                            <th>Niveaux</th>
+                            <th>Équipes</th>
+                            <th>Actions</th>
+                        </tr>
                     </thead>
-                    <tbody>${rows}</tbody>
+
+                    <tbody>
+                        ${rows}
+                    </tbody>
                 </table>
             </div>
         `}
     `;
 }
 
+function filtrerClubs() {
+    const recherche = document
+        .getElementById("recherche-club")
+        .value
+        .toLowerCase();
+
+    document.querySelectorAll(".club-row").forEach(row => {
+
+        const nom = row.dataset.nom;
+        const niveaux = row.dataset.niveaux;
+
+        const visible =
+            nom.includes(recherche) ||
+            niveaux.includes(recherche);
+
+        row.style.display = visible ? "" : "none";
+    });
+}
 // ===================================================================
 // EQUIPES
 // ===================================================================

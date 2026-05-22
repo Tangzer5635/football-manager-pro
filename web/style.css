@@ -933,6 +933,29 @@ body {
     padding-left: 2px;
 }
 
+
+.search-input{
+    padding:12px 16px;
+    border:none;
+    border-radius:12px;
+    background:#1e293b;
+    color:white;
+    min-width:280px;
+    outline:none;
+}
+
+.search-input::placeholder{
+    color:#94a3b8;
+}
+
+.badge-niveau{
+    background:#2563eb;
+    color:white;
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:600;
+}
 /* =========================================================
    RESPONSIVE
 ========================================================= */
