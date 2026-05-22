@@ -265,11 +265,18 @@ function afficherClubs(title, subtitle, content) {
 
                 <td>${club.equipes.length}</td>
 
-                <td>
+                <td style="display:flex;gap:8px;">
+                    
+                    <button class="action-btn"
+                            onclick='afficherPresentationClub(${JSON.stringify(club)})'>
+                        👁️ Voir
+                    </button>
+                
                     <button class="action-btn danger-btn"
                             onclick="supprimerClub('${escapeJs(club.nom)}')">
                         🗑️ Supprimer
                     </button>
+                
                 </td>
             </tr>
         `;
@@ -879,6 +886,127 @@ async function supprimerClub(nom) {
         console.error(error);
         alert("Erreur suppression club.");
     }
+}
+
+// ===================================================================
+// PRÉSENTATION CLUB
+// ===================================================================
+
+function afficherPresentationClub(club) {
+
+    let nbJoueurs = 0;
+    let nbTitulaires = 0;
+    let valeurTotale = 0;
+
+    club.equipes.forEach(equipe => {
+        nbJoueurs += equipe.joueurs.length;
+
+        equipe.joueurs.forEach(joueur => {
+            valeurTotale += Number(joueur.prix || 0);
+
+            if (joueur.titulaire) {
+                nbTitulaires++;
+            }
+        });
+    });
+
+    const equipesHtml = club.equipes.map(equipe => `
+        <div class="club-equipe-card">
+            <h3>⚽ ${equipe.niveau}</h3>
+
+            <p>
+                <strong>Entraîneur :</strong>
+                ${equipe.entraineur}
+            </p>
+
+            <p>
+                <strong>Joueurs :</strong>
+                ${equipe.joueurs.length}
+            </p>
+        </div>
+    `).join("");
+
+    const modal = document.createElement("div");
+
+    modal.className = "modal";
+
+    modal.innerHTML = `
+        <div class="modal-overlay"></div>
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h2>🏟️ ${club.nom}</h2>
+
+                <button class="modal-close">✕</button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="club-presentation">
+
+                    <div class="club-stats-grid">
+
+                        <div class="club-stat-card">
+                            <h3>📅 Fondation</h3>
+                            <p>${formatDate(club.dateCreation)}</p>
+                        </div>
+
+                        <div class="club-stat-card">
+                            <h3>👥 Équipes</h3>
+                            <p>${club.equipes.length}</p>
+                        </div>
+
+                        <div class="club-stat-card">
+                            <h3>⚽ Joueurs</h3>
+                            <p>${nbJoueurs}</p>
+                        </div>
+
+                        <div class="club-stat-card">
+                            <h3>⭐ Titulaires</h3>
+                            <p>${nbTitulaires}</p>
+                        </div>
+
+                        <div class="club-stat-card full-width">
+                            <h3>💰 Valeur totale</h3>
+                            <p>${formatPrix(valeurTotale)}</p>
+                        </div>
+
+                    </div>
+
+                    <div style="margin-top:32px;">
+
+                        <h2 style="margin-bottom:16px;">
+                            ⚽ Équipes du club
+                        </h2>
+
+                        ${equipesHtml || `
+                            <p style="color:#94a3b8;">
+                                Aucune équipe.
+                            </p>
+                        `}
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="action-btn secondary-btn">
+                    Fermer
+                </button>
+            </div>
+
+        </div>
+    `;
+
+    modal.querySelectorAll(
+        ".modal-close, .secondary-btn, .modal-overlay"
+    ).forEach(btn =>
+        btn.addEventListener("click", () => modal.remove())
+    );
+
+    document.body.appendChild(modal);
 }
 
 // ===================================================================
