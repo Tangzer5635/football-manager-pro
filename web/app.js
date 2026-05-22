@@ -64,6 +64,7 @@ async function chargerDonnees() {
             clubs: clubs.map(club => ({
                 id: club.id_club,
                 nom: club.nom_club,
+                logo: club.logo_url,
                 dateCreation: club.date_creation,
                 equipes: equipes
                     .filter(e => e.id_club === club.id_club)
@@ -252,7 +253,15 @@ function afficherClubs(title, subtitle, content) {
                 <td>${i + 1}</td>
 
                 <td>
-                    <strong>${club.nom}</strong>
+                    <div class="club-cell">
+                        <img
+                            src="${club.logo}"
+                            class="club-logo"
+                            alt="${club.nom}"
+                        >
+                    
+                        <strong>${club.nom}</strong>
+                    </div>
                 </td>
 
                 <td>${formatDate(club.dateCreation)}</td>
@@ -857,7 +866,11 @@ async function creerClub() {
         await api("/club", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ nom_club: nom, date_creation: dateCreation })
+            body: JSON.stringify({
+                nom_club: nom,
+                date_creation: dateCreation,
+                logo_url: trouverLogoClub(nom)
+            })
         });
 
         document.getElementById("club-nom").value  = "";
@@ -886,6 +899,36 @@ async function supprimerClub(nom) {
         console.error(error);
         alert("Erreur suppression club.");
     }
+}
+
+function trouverLogoClub(nomClub) {
+
+    const domaines = {
+
+        "Paris Saint-Germain": "psg.fr",
+        "Olympique de Marseille": "om.fr",
+        "AS Monaco": "asmonaco.com",
+        "Olympique Lyonnais": "ol.fr",
+        "Football Club de Lorient": "fclweb.fr",
+        "RC Lens": "rclens.fr",
+        "LOSC": "losc.fr",
+        "OGC Nice": "ogcnice.com",
+        "FC Nantes": "fcnantes.com",
+        "Stade Rennais": "staderennais.com",
+        "Le Havre": "hac-foot.com",
+        "Toulouse": "toulousefc.com",
+        "Montpellier": "mhscfoot.com",
+        "Strasbourg": "rcstrasbourgalsace.fr"
+
+    };
+
+    const domaine = domaines[nomClub];
+
+    if (!domaine) {
+        return "https://cdn-icons-png.flaticon.com/512/53/53283.png";
+    }
+
+    return `https://img.logo.dev/${domaine}?token=${LOGO_API_KEY}`;
 }
 
 // ===================================================================
